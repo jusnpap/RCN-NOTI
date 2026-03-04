@@ -56,8 +56,6 @@
                         class="fa-brands fa-facebook-f"></i></a>
                 <a href="https://www.tiktok.com" target="_blank" aria-label="TikTok"><i
                         class="fa-brands fa-tiktok"></i></a>
-                <a href="https://www.google.com" target="_blank" aria-label="Google"><i
-                        class="fa-brands fa-google"></i></a>
             </div>
         </div>
     </nav>
@@ -218,6 +216,84 @@
                 </article>
             </div>
 
+            <div id="premium-articles-section"
+                style="display: none; margin-top: 3rem; animation: fadeInSlideUp 0.6s ease forwards;">
+                <h2
+                    style="text-align:center; margin-bottom: 2rem; color: #F59E0B; font-size: 2.2rem; font-weight: 800;">
+                    <i class="fa-solid fa-crown" style="margin-right: 10px;"></i>Selección Premium
+                </h2>
+                <div class="grid-container premium-grid">
+                    <!-- Articulo Premium 1 -->
+                    <article class="video-card premium-card" onclick="app.navigateTo('premium-1')"
+                        style="border-top: 4px solid #F59E0B;">
+                        <div class="video-thumbnail"
+                            style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-newspaper" style="font-size: 4rem; color: #F59E0B; opacity: 0.8;"></i>
+                            <div class="premium-lock"
+                                style="position: absolute; top: 15px; right: 15px; background: #F59E0B; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
+                                <i class="fa-solid fa-crown"></i> VIP
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-badge" style="color: #F59E0B; border-color: #F59E0B;">REPORTAJE EXCLUSIVO
+                            </div>
+                            <h3 class="news-summary-title">El futuro de la Inteligencia Artificial: La década disruptiva
+                            </h3>
+                            <p class="news-summary-text">Análisis muy detallado con métricas, entrevistas a 50 líderes
+                                de la industria y proyecciones económicas sobre cómo la IA transformará los negocios
+                                convencionales y automatizará el 40% de tareas repetitivas.</p>
+                            <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
+                                    class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                    </article>
+                    <!-- Articulo Premium 2 -->
+                    <article class="video-card premium-card" onclick="app.navigateTo('premium-2')"
+                        style="border-top: 4px solid #F59E0B;">
+                        <div class="video-thumbnail"
+                            style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-chart-line"
+                                style="font-size: 4rem; color: #F59E0B; opacity: 0.8;"></i>
+                            <div class="premium-lock"
+                                style="position: absolute; top: 15px; right: 15px; background: #F59E0B; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
+                                <i class="fa-solid fa-crown"></i> VIP
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-badge" style="color: #F59E0B; border-color: #F59E0B;">ANÁLISIS FINANCIERO
+                            </div>
+                            <h3 class="news-summary-title">Burbuja inmobiliaria 2.0 y su impacto oculto</h3>
+                            <p class="news-summary-text">Un vistazo profundo tras bambalinas a los movimientos de los
+                                grandes fondos de inversión y sus estrategias agresivas en el sector residencial que
+                                amenazan con desequilibrar el mercado.</p>
+                            <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
+                                    class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                    </article>
+                    <!-- Articulo Premium 3 -->
+                    <article class="video-card premium-card" onclick="app.navigateTo('premium-3')"
+                        style="border-top: 4px solid #F59E0B;">
+                        <div class="video-thumbnail"
+                            style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-microscope"
+                                style="font-size: 4rem; color: #F59E0B; opacity: 0.8;"></i>
+                            <div class="premium-lock"
+                                style="position: absolute; top: 15px; right: 15px; background: #F59E0B; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
+                                <i class="fa-solid fa-crown"></i> VIP
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-badge" style="color: #F59E0B; border-color: #F59E0B;">CIENCIA Y SALUD</div>
+                            <h3 class="news-summary-title">La revolución CRISPR y los límites de la ética genética</h3>
+                            <p class="news-summary-text">Desglose completo de las herramientas genéticas modernas. Una
+                                investigación profunda de 5,000 palabras explicando los recientes avances clínicos,
+                                posibles riesgos ecológicos y patentes en disputa.</p>
+                            <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
+                                    class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
             <div class="action-container">
                 <button id="btn-contact-grid" class="btn-primary"
                     onclick="app.navigateTo('contact')">CONTÁCTANOS</button>
@@ -235,7 +311,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -280,7 +355,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -325,7 +399,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -376,7 +449,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -414,7 +486,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -454,7 +525,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -489,7 +559,6 @@
                     <div class="social-icons dark">
                         <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                         <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="https://www.google.com" target="_blank"><i class="fa-brands fa-google"></i></a>
                     </div>
                 </div>
 
@@ -510,6 +579,166 @@
                 </div>
 
                 <button class="btn-outline" onclick="app.navigateTo('grid')">Volver</button>
+            </div>
+        </section>
+
+        <!-- View Premium 1 -->
+        <section id="view-premium-1" class="view" aria-labelledby="premium-title-1">
+            <div class="video-detail-container">
+                <div class="video-header">
+                    <span class="badge-red" style="background: #F59E0B; color: white;">REPORTAJE EXCLUSIVO</span>
+                </div>
+                <div class="video-title-bar">
+                    <h2 id="premium-title-1" class="video-brand" style="color: #1e293b;">El futuro de la Inteligencia
+                        Artificial: La década disruptiva</h2>
+                    <div class="social-icons dark">
+                        <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="video-description scrollable-content" style="max-height: none; overflow-y: visible;">
+                    <p style="font-size: 1.1rem; color: #334155; font-weight: 600; font-style: italic;">Por el equipo de
+                        investigación Premium de RCN, lectura estimada de 15 minutos.</p>
+                    <br>
+                    <h3 style="color: #F59E0B;">Introducción al Cambio Paradigmático</h3>
+                    <p>La inteligencia artificial ha pasado de ser una promesa tecnológica a convertirse en el motor
+                        principal de la cuarta revolución industrial. En nuestro análisis de mercado, entrevistamos a
+                        más de 50 CEOs globales que afirmaron que su inversión en IA se ha triplicado en apenas 18
+                        meses.</p>
+                    <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800"
+                        alt="IA Concept"
+                        style="width: 100%; border-radius: 12px; margin: 1.5rem 0; box-shadow: var(--shadow-md);">
+                    <h3 style="color: #F59E0B;">El Impacto en el Empleo y las Matrices Económicas</h3>
+                    <p>A diferencia de revoluciones anteriores que mecanizaron la fuerza bruta, esta ola de
+                        automatización apunta al trabajo cognitivo. Los modelos de lenguaje predictivo y análisis de
+                        datos masivos están reemplazando a analistas financieros junior, redactores y programadores de
+                        nivel básico. Se proyecta que para 2030, el 40% de las tareas repetitivas de oficina estarán
+                        automatizadas.</p>
+                    <p>Sin embargo, no todo es pérdida de empleo. Las áreas de ciberseguridad avanzada, desarrollo de
+                        ética algorítmica y gestión de prompt engineering verán un crecimiento salarial de hasta un 65%
+                        debido a la escasez de talento especializado.</p>
+                    <div
+                        style="background: #f8fafc; padding: 2rem; border-left: 4px solid #F59E0B; border-radius: 4px; margin: 2rem 0;">
+                        <h4 style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1rem;">Métricas Clave (2025-2035)
+                        </h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li>Aumento proyectado del PIB global: 14% (15.7 billones USD).</li>
+                            <li>Tasa de adopción empresarial en Fortune 500: 92%.</li>
+                            <li>Sectores más beneficiados: Salud diagnóstica y logística en cadena de suministro.</li>
+                        </ul>
+                    </div>
+                    <p>Este cambio requerirá una adaptación masiva de los sistemas educativos y, según nuestros
+                        expertos, posiblemente la implementación de una Renta Básica en países desarrollados si la
+                        transición no se gestiona adecuadamente.</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 3rem;">
+                    <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View Premium 2 -->
+        <section id="view-premium-2" class="view" aria-labelledby="premium-title-2">
+            <div class="video-detail-container">
+                <div class="video-header">
+                    <span class="badge-red" style="background: #F59E0B; color: white;">ANÁLISIS FINANCIERO</span>
+                </div>
+                <div class="video-title-bar">
+                    <h2 id="premium-title-2" class="video-brand" style="color: #1e293b;">Burbuja inmobiliaria 2.0 y su
+                        impacto oculto</h2>
+                    <div class="social-icons dark">
+                        <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="video-description scrollable-content" style="max-height: none; overflow-y: visible;">
+                    <p style="font-size: 1.1rem; color: #334155; font-weight: 600; font-style: italic;">Por el equipo de
+                        investigación Premium de RCN, lectura estimada de 12 minutos.</p>
+                    <br>
+                    <h3 style="color: #F59E0B;">Fondos Institucionales vs. Compradores Locales</h3>
+                    <p>El mercado de bienes raíces está mutando rápidamente en favor de los gigantes corporativos.
+                        Empresas y fondos de pensiones están adquiriendo barrios completos un 20% por encima de su valor
+                        de mercado en efectivo, desplazando estructuralmente a las familias promedio. Esto está
+                        consolidando una generación de inquilinos perpetuos.</p>
+                    <p>Basados en documentos filtrados de tres de las mayores firmas de capital privado, nuestro
+                        análisis revela que planean retener propiedades por un mínimo de 15 años para monopolizar las
+                        rentas urbanas.</p>
+                    <div
+                        style="background: #f8fafc; padding: 2rem; border-left: 4px solid #F59E0B; border-radius: 4px; margin: 2rem 0;">
+                        <h4 style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1rem;">Estadísticas del Mercado
+                            Oculto</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li>El 35% de las transacciones residenciales recientes no involucra hipotecas.</li>
+                            <li>Los precios de alquiler aumentaron tres veces más rápido que la inflación en zonas
+                                metropolitanas.</li>
+                            <li>Aparición de "ciudades fantasma corporativas" vacías mientras se acumulan como activos
+                                financieros especulativos.</li>
+                        </ul>
+                    </div>
+                    <p>El banco central vigila esto con preocupación, previendo que cualquier fallo en la regulación
+                        podría llevar a un colapso sistémico mucho más complejo que el de 2008, al involucrar pensiones
+                        atadas a esta deuda de rentas corporativas.</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 3rem;">
+                    <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View Premium 3 -->
+        <section id="view-premium-3" class="view" aria-labelledby="premium-title-3">
+            <div class="video-detail-container">
+                <div class="video-header">
+                    <span class="badge-red" style="background: #F59E0B; color: white;">CIENCIA Y SALUD</span>
+                </div>
+                <div class="video-title-bar">
+                    <h2 id="premium-title-3" class="video-brand" style="color: #1e293b;">La revolución CRISPR y los
+                        límites de la ética genética</h2>
+                    <div class="social-icons dark">
+                        <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="video-description scrollable-content" style="max-height: none; overflow-y: visible;">
+                    <p style="font-size: 1.1rem; color: #334155; font-weight: 600; font-style: italic;">Por el equipo de
+                        investigación Premium de RCN, lectura estimada de 18 minutos.</p>
+                    <br>
+                    <h3 style="color: #F59E0B;">Reescribiendo el Código de la Vida</h3>
+                    <p>La capacidad de editar genes con precisión láser nunca fue tan barata y rápida de lograr.
+                        CRISPR-Cas9 ha revolucionado los laboratorios. Desde tratamientos experimentales contra el
+                        cáncer personalizados hasta la eliminación de la fibrosis quística, los ensayos clínicos de Fase
+                        3 muestran resultados esperanzadores.</p>
+                    <p>Pero el avance trae consigo un debate que antes era pura ciencia ficción: Bebés de diseño,
+                        edición de línea germinal (cambios que se heredan a las siguientes generaciones) y mejoras
+                        cognitivas prenatales.</p>
+                    <img src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&q=80&w=800"
+                        alt="CRISPR Concept"
+                        style="width: 100%; border-radius: 12px; margin: 1.5rem 0; box-shadow: var(--shadow-md);">
+                    <div
+                        style="background: #f8fafc; padding: 2rem; border-left: 4px solid #F59E0B; border-radius: 4px; margin: 2rem 0;">
+                        <h4 style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1rem;">Puntos Críticos de Conflicto
+                        </h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li><b>Regulación Desigual:</b> Países con laxitud ética permiten experimentos prohibidos en
+                                occidente.</li>
+                            <li><b>El Riesgo Off-Target:</b> Mutaciones imprevistas causadas por cortes del ADN en
+                                ubicaciones incorrectas.</li>
+                            <li><b>Edición Ecológica:</b> Modificar mosquitos para no portar malaria podría alterar
+                                catastróficamente la cadena trófica de hábitats enteros.</li>
+                        </ul>
+                    </div>
+                    <p>Hablamos con diez de los principales bioeticistas de universidades de todo el planeta y el
+                        consenso es unánime: la tecnología va tres décadas por delante de la legislación.</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 3rem;">
+                    <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
+                </div>
             </div>
         </section>
 
@@ -666,6 +895,73 @@
                         ¿Ya tienes cuenta? <span onclick="app.switchAuthMode('login')">Inicia sesión aquí</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div id="edit-profile-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Información</h3>
+                    <button class="close-btn" onclick="app.closeModal('edit-profile-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form onsubmit="event.preventDefault(); app.saveProfile();">
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="edit-name">Nombre</label>
+                        <input type="text" id="edit-name" required placeholder="Tu nombre">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="edit-email">Correo electrónico</label>
+                        <input type="email" id="edit-email" required placeholder="tu@correo.com">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="edit-phone">Teléfono Celular</label>
+                        <input type="tel" id="edit-phone" placeholder="Tu número">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="edit-password">Nueva Contraseña</label>
+                        <input type="password" id="edit-password" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">GUARDAR CAMBIOS</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Checkout Modal -->
+        <div id="checkout-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Adquirir Plan: <span id="checkout-plan-name"></span></h3>
+                    <button class="close-btn" onclick="app.closeModal('checkout-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="margin-bottom: 1.5rem; text-align: center;">
+                    <span style="font-size: 2rem; font-weight: 800; color: var(--text-main);"
+                        id="checkout-plan-price"></span>
+                </div>
+                <form onsubmit="event.preventDefault(); app.processCheckout();">
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="checkout-card">Número de Tarjeta</label>
+                        <input type="text" id="checkout-card" required placeholder="0000 0000 0000 0000" maxlength="19">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="checkout-exp">Vencimiento</label>
+                            <input type="text" id="checkout-exp" required placeholder="MM/AA" maxlength="5">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="checkout-cvv">CVV</label>
+                            <input type="password" id="checkout-cvv" required placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="checkout-phone">Teléfono Celular (Confirmación)</label>
+                        <input type="tel" id="checkout-phone" required placeholder="Tu número para notificaciones">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; background: var(--accent-blue);">PAGAR
+                        AHORA</button>
+                </form>
             </div>
         </div>
     </main>
