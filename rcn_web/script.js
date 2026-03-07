@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser: null,
         currentPlanId: 0,
         role: 'USER',
+        adminModeActive: false,
         pendingView: null,
 
         updateUserBadge() {
@@ -39,7 +40,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('display-username').innerHTML = `<i class="fa-regular fa-user" style="margin-right: 5px;"></i> ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
+
+            let adminToggle = document.getElementById('admin-toggle-btn');
+            if (this.role === 'ADMIN') {
+                if (!adminToggle) {
+                    adminToggle = document.createElement('button');
+                    adminToggle.id = 'admin-toggle-btn';
+                    adminToggle.className = 'btn-profile';
+                    adminToggle.style.color = '#3B82F6';
+                    adminToggle.innerHTML = '<i class="fa-solid fa-tools"></i> ADMINISTRAR ANUNCIOS';
+                    adminToggle.onclick = () => {
+                        this.toggleAdminMode();
+                    };
+                    const btnProfile = document.querySelector('.btn-profile');
+                    if (btnProfile) {
+                        btnProfile.parentNode.insertBefore(adminToggle, btnProfile.nextSibling);
+                    }
+                }
+            } else {
+                if (adminToggle) adminToggle.remove();
+                this.adminModeActive = false;
+            }
+
             this.renderAdminControls();
+        },
+
+        toggleAdminMode() {
+            this.adminModeActive = !this.adminModeActive;
+            this.renderAdminControls();
+            document.getElementById('user-dropdown').classList.remove('active');
+            alert(this.adminModeActive ? 'Modo Administrador activado. Ahora puedes ver los botones de edición en cada anuncio.' : 'Modo Administrador desactivado.');
         },
 
         requireAuthAndNavigate(viewId) {
@@ -114,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.currentUser = null;
             this.currentPlanId = 0;
             this.role = 'USER';
-            
+
             localStorage.removeItem('rcn_auth_user');
             localStorage.removeItem('rcn_auth_role');
             localStorage.removeItem('rcn_auth_plan');
@@ -306,7 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.isLoggedIn = true;
                 this.currentUser = user.trim().toUpperCase();
 
-                if (user.trim() === 'juanp_nanrvaez' && pwd === 'Noviembre25') {
+                const userNameLower = user.trim().toLowerCase();
+                if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
                     this.role = 'ADMIN';
                 } else {
                     this.role = 'USER';
@@ -345,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingControls = card.querySelector('.admin-controls');
                 if (existingControls) existingControls.remove();
 
-                if (this.role === 'ADMIN') {
+                if (this.role === 'ADMIN' && this.adminModeActive) {
                     const controls = document.createElement('div');
                     controls.className = 'admin-controls';
                     controls.style.position = 'absolute';
@@ -404,12 +435,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (card) {
                     card.style.display = 'none';
                 }
-                
+
+                // Fallback local storage
                 let deletedIds = JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
                 if (!deletedIds.includes(id)) {
                     deletedIds.push(id);
                     localStorage.setItem('rcn_deleted_announcements', JSON.stringify(deletedIds));
                 }
+
+                // Cloudflare KV Sync
+                fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                }).catch(err => console.error('Error syncing delete to Cloudflare KV:', err));
             }
         },
 
@@ -420,11 +459,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = card.querySelector('.news-summary-title')?.textContent || '';
             const desc = card.querySelector('.news-summary-text')?.textContent || '';
             const badge = card.querySelector('.card-badge')?.textContent || '';
-            
+
             let imgUrl = '';
             const imgElement = card.querySelector('img');
             const videoElement = card.querySelector('video source');
-            
+
             if (imgElement) {
                 imgUrl = imgElement.src;
             } else if (videoElement) {
@@ -455,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (card) {
                 if (card.querySelector('.news-summary-title')) card.querySelector('.news-summary-title').textContent = title;
                 if (card.querySelector('.news-summary-text')) card.querySelector('.news-summary-text').textContent = desc;
-                
+
                 const badgeEl = card.querySelector('.card-badge');
                 if (badgeEl) {
                     if (badgeTxt.trim().length > 0) {
@@ -473,8 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const oldImg = thumbContainer.querySelector('img');
                         if (oldVideo) oldVideo.remove();
                         if (oldImg) oldImg.remove();
-                        const oldIcon = thumbContainer.querySelector('.play-icon, .fa-newspaper, .fa-chart-line, .fa-microscope'); 
-                        
+                        const oldIcon = thumbContainer.querySelector('.play-icon, .fa-newspaper, .fa-chart-line, .fa-microscope');
+
                         const newImg = document.createElement('img');
                         newImg.src = imgUrl;
                         newImg.style.position = 'absolute';
@@ -484,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         newImg.style.zIndex = '1';
                         newImg.style.borderRadius = 'var(--radius-md) var(--radius-md) 0 0';
                         thumbContainer.insertBefore(newImg, thumbContainer.firstChild);
-                        
+
                         // Push old icons behind or adjust z-index
                         if (oldIcon && oldIcon.classList.contains('play-icon')) {
                             oldIcon.style.zIndex = '2';
@@ -493,14 +532,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Fallback Local Storage
             let edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
             edited[id] = { title, desc, badgeTxt, imgUrl };
             localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
 
+            // Cloudflare KV Sync
+            fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl })
+            }).catch(err => console.error('Error syncing edit to Cloudflare KV:', err));
+
             this.closeModal('edit-announcement-modal');
         },
 
-        applySavedAnnouncements() {
+        async applySavedAnnouncements() {
+            try {
+                // First try to fetch from Cloudflare KV database
+                const response = await fetch('/api/announcements');
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Sync locally so there's always a backup
+                    if (data.deleted && data.deleted.length > 0) {
+                        localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
+                    }
+                    if (data.edited && Object.keys(data.edited).length > 0) {
+                        localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch from Cloudflare KV, falling back to local storage', error);
+            }
+
+            // Apply from Local Storage (which now has KV data if fetch succeeded)
             const deletedIds = JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
             deletedIds.forEach(id => {
                 const card = document.querySelector(`.video-card[data-id="${id}"]`);
@@ -515,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (card) {
                     if (card.querySelector('.news-summary-title')) card.querySelector('.news-summary-title').textContent = data.title;
                     if (card.querySelector('.news-summary-text')) card.querySelector('.news-summary-text').textContent = data.desc;
-                    
+
                     const badgeEl = card.querySelector('.card-badge');
                     if (badgeEl) {
                         if (data.badgeTxt.trim().length > 0) {
@@ -526,14 +592,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    if (data.imgUrl.trim().length > 0) {
+                    if (data.imgUrl && data.imgUrl.trim().length > 0) {
                         const thumbContainer = card.querySelector('.video-thumbnail');
                         if (thumbContainer) {
                             const oldVideo = thumbContainer.querySelector('video');
                             const oldImg = thumbContainer.querySelector('img');
                             if (oldVideo) oldVideo.remove();
                             if (oldImg) oldImg.remove();
-                            
+
                             const newImg = document.createElement('img');
                             newImg.src = data.imgUrl;
                             newImg.style.position = 'absolute';
@@ -614,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
         app.currentPlanId = parseInt(savedPlan) || 0;
         app.updateUserBadge();
     }
-    
+
     app.applySavedAnnouncements();
 
     // Add subtle staggered entrance animations to grid cards on load
