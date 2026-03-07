@@ -79,6 +79,12 @@ body {
     font-weight: 600;
     font-size: 0.95rem;
     letter-spacing: 1px;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .social-icons {
@@ -257,6 +263,12 @@ body {
     transition: var(--transition);
     cursor: pointer;
     border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+a.video-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
 .video-card:hover {
@@ -856,7 +868,12 @@ body {
 
 .dropdown-username {
     font-weight: 800;
-    color: var(--primary);
+    color: var(--text-main);
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
     font-size: 0.95rem;
 }
 
@@ -1127,18 +1144,22 @@ body {
 .plan-btn-active:hover {
     background: transparent;
     color: var(--text-muted);
-}/* --- Checkout & Form Modals --- */
+}
+
+/* --- Checkout & Form Modals --- */
 .checkout-input-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
+
 .checkout-input-group label {
     font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 600;
 }
+
 .checkout-input {
     width: 100%;
     padding: 0.8rem;
@@ -1149,16 +1170,20 @@ body {
     outline: none;
     transition: var(--transition);
 }
+
 .checkout-input:focus {
     border-color: var(--primary);
 }
+
 .checkout-row {
     display: flex;
     gap: 1rem;
 }
+
 .checkout-row .checkout-input-group {
     flex: 1;
 }
+
 .checkout-btn-group {
     display: flex;
     justify-content: flex-end;

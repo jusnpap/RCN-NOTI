@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
         speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
     });
 
+    // Close user dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('user-dropdown');
+        if (dropdown && dropdown.classList.contains('active')) {
+            if (!e.target.closest('.user-menu-container')) {
+                dropdown.classList.remove('active');
+            }
+        }
+    });
+
     const app = {
         currentView: 'grid',
         isLoggedIn: false,
@@ -152,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.className = 'btn-primary';
                         btn.style.background = 'var(--accent-blue)';
                         btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Descargar PDF del Artículo';
-                        btn.onclick = () => alert('Generando PDF...');
+                        btn.onclick = () => app.downloadPDF(container);
 
                         downloadContainer.appendChild(btn);
 
@@ -261,6 +271,87 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Artículo modificado exitosamente.");
         },
 
+        downloadPDF(container) {
+            const titleEl = container.querySelector('.video-brand');
+            const descEl = container.querySelector('.video-description');
+
+            if (!titleEl || !descEl) {
+                alert('No se pudo encontrar el contenido para descargar.');
+                return;
+            }
+
+            const clonedDesc = descEl.cloneNode(true);
+
+            // Clean up styles for PDF
+            clonedDesc.style.maxHeight = 'none';
+            clonedDesc.style.overflow = 'visible';
+
+            const pdfContent = document.createElement('div');
+            pdfContent.style.padding = '40px';
+            pdfContent.style.fontFamily = 'Helvetica, Arial, sans-serif';
+            pdfContent.style.color = '#1e293b';
+
+            const header = document.createElement('h1');
+            header.style.color = '#E63946';
+            header.style.borderBottom = '2px solid #E63946';
+            header.style.paddingBottom = '10px';
+            header.style.marginBottom = '20px';
+            header.textContent = titleEl.textContent;
+
+            const watermark = document.createElement('div');
+            watermark.style.position = 'fixed';
+            watermark.style.top = '50%';
+            watermark.style.left = '50%';
+            watermark.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
+            watermark.style.fontSize = '8rem';
+            watermark.style.color = 'rgba(230, 57, 70, 0.05)';
+            watermark.style.zIndex = '-1';
+            watermark.style.pointerEvents = 'none';
+            watermark.style.whiteSpace = 'nowrap';
+            watermark.textContent = 'RCN PREMIUM';
+
+            const footer = document.createElement('div');
+            footer.style.marginTop = '40px';
+            footer.style.paddingTop = '20px';
+            footer.style.borderTop = '1px solid #cbd5e1';
+            footer.style.fontSize = '0.8rem';
+            footer.style.color = '#64748b';
+            footer.style.textAlign = 'center';
+            footer.innerHTML = `Descargado desde RCN Noticias en línea. Solo para uso personal por: <b>${this.currentUser || 'Invitado'}</b>.<br>Todos los derechos reservados.`;
+
+            pdfContent.appendChild(watermark);
+            pdfContent.appendChild(header);
+            pdfContent.appendChild(clonedDesc);
+            pdfContent.appendChild(footer);
+
+            // Hide the actual button and show a loading state
+            const btn = event.currentTarget || container.querySelector('.fa-file-pdf').closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+            btn.disabled = true;
+
+            const opt = {
+                margin: 10,
+                filename: `${titleEl.textContent.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Needs a timeout to let the DOM update the loading state
+            setTimeout(() => {
+                html2pdf().set(opt).from(pdfContent).save().then(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }).catch(err => {
+                    console.error('PDF generation error:', err);
+                    alert('Hubo un error al generar el PDF.');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+            }, 100);
+        },
+
         openSettingsModal() {
             const modal = document.getElementById('settings-modal');
             modal.style.display = 'flex';
@@ -309,6 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         requireAuthAndNavigate(viewId) {
             if (this.isLoggedIn) {
+                // Instead of just this.navigateTo, let's update the hash so it's consistent
+                window.location.hash = viewId;
                 this.navigateTo(viewId);
             } else {
                 this.pendingView = viewId;
@@ -332,6 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (this.currentView === viewId || this.isAnimating) return;
 
+            window.location.hash = viewId;
             this.isAnimating = true;
             const currentEl = document.getElementById(`view-${this.currentView}`);
 
@@ -1241,4 +1335,23 @@ document.addEventListener('DOMContentLoaded', () => {
     videos.forEach(video => {
         video.style.opacity = '1'; // keep visible by default
     });
+
+    // Hash routing initialization
+    const handleHash = () => {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            if (hash.startsWith('video-') || hash.startsWith('premium-')) {
+                app.requireAuthAndNavigate(hash);
+            } else {
+                app.navigateTo(hash);
+            }
+        } else {
+            // Default view
+            if (app.currentView !== 'grid') app.navigateTo('grid');
+        }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    // Call on first load after a slight delay to ensure UI is ready
+    setTimeout(handleHash, 50);
 });
