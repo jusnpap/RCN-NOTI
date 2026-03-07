@@ -13,13 +13,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-dark.css">
 </head>
 
 <body>
     <nav class="navbar" id="main-nav">
         <div class="nav-left">
-            <i class="fa-regular fa-user logo-icon" onclick="app.showLoginModal()" style="cursor: pointer;"
-                title="Iniciar sesión"></i>
+            <i class="fa-regular fa-user logo-icon" id="nav-login-btn" onclick="app.showLoginModal()"
+                style="cursor: pointer;" title="Iniciar sesión"></i>
             <span class="logo-text" onclick="app.navigateTo('grid')" style="cursor: pointer;"
                 title="Ir al inicio">RCN</span>
         </div>
@@ -44,6 +45,10 @@
                     <button class="btn-profile"
                         onclick="app.navigateTo('profile'); document.getElementById('user-dropdown').classList.remove('active');">
                         <i class="fa-solid fa-user-circle"></i> MI PERFIL
+                    </button>
+                    <button class="btn-profile"
+                        onclick="app.openSettingsModal(); document.getElementById('user-dropdown').classList.remove('active');">
+                        <i class="fa-solid fa-gear"></i> CONFIGURACIÓN
                     </button>
                     <div class="dropdown-divider"></div>
                     <button class="btn-logout" onclick="app.logout()">
@@ -996,6 +1001,89 @@
                 </form>
             </div>
         </div>
+
+        <!-- Modal: Configuración -->
+        <div class="modal-overlay" id="settings-modal" onclick="if(event.target === this) app.closeSettingsModal()">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-gear" style="margin-right: 10px; color: var(--text-muted);"></i>
+                        Configuración</h3>
+                    <button class="close-btn" onclick="app.closeSettingsModal()"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="settings-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                    <div class="input-group">
+                        <label for="settings-theme">Apariencia (Tema)</label>
+                        <select id="settings-theme" onchange="app.changeTheme(this.value)"
+                            style="padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); font-size: 1rem; background: var(--bg-main); color: var(--text-main);">
+                            <option value="light">☀️ Modo Claro</option>
+                            <option value="dark">🌑 Modo Oscuro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="settings-text-size">Tamaño del Texto Web</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="font-size: 0.8rem;">A</span>
+                            <input type="range" id="settings-text-size" min="12" max="24" value="16" step="1"
+                                oninput="app.changeTextSize(this.value)" style="flex-grow: 1;">
+                            <span style="font-size: 1.2rem;">A</span>
+                        </div>
+                        <span id="text-size-display"
+                            style="text-align: right; font-size: 0.85rem; color: var(--text-muted);">16px</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="settings-volume">Volumen Predeterminado de Videos</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fa-solid fa-volume-low"></i>
+                            <input type="range" id="settings-volume" min="0" max="1" value="0.5" step="0.1"
+                                onchange="app.changeGlobalVolume(this.value)" style="flex-grow: 1;">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Editar Artículo Completo -->
+        <div class="modal-overlay" id="edit-full-article-modal"
+            onclick="if(event.target === this) app.closeModal('edit-full-article-modal')">
+            <div class="modal-content" style="max-width: 900px; width: 95%;">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-pen-nib" style="margin-right: 10px; color: var(--primary);"></i> Editor
+                        Avanzado de Artículo</h3>
+                    <button class="close-btn" onclick="app.closeModal('edit-full-article-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div class="input-group">
+                        <label>ID Interno</label>
+                        <input type="text" id="full-edit-id" readonly
+                            style="background: rgba(0,0,0,0.05); color: var(--text-muted); cursor: not-allowed;">
+                    </div>
+                    <div class="input-group">
+                        <label>Título del Artículo</label>
+                        <input type="text" id="full-edit-title" placeholder="Título en grande">
+                    </div>
+                    <div class="input-group" style="flex-grow: 1;">
+                        <label>Contenido del Artículo (HTML Soportado)</label>
+                        <textarea id="full-edit-content" rows="15"
+                            placeholder="Escribe el contenido completo del artículo aquí..."
+                            style="resize: vertical; font-family: monospace; font-size: 0.9rem; line-height: 1.5; padding: 1rem;"></textarea>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;"><i
+                                class="fa-solid fa-circle-info"></i> Puedes usar etiquetas HTML como &lt;p&gt;,
+                            &lt;h3&gt;, &lt;b&gt;, &lt;img&gt; para dar formato a la noticia.</span>
+                    </div>
+                    <button class="btn-primary" onclick="app.saveFullArticle()" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i> Guardar Edición Profunda
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>

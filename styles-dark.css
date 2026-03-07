@@ -1,0 +1,97 @@
+body.dark-mode {
+    --bg-main: #0F172A;
+    --bg-white: #1E293B;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-light: #334155;
+    background-image: radial-gradient(circle at 100% 0%, #172540 0%, transparent 40%),
+        radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 40%);
+}
+
+.dark-mode .navbar {
+    background: rgba(30, 41, 59, 0.85);
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .video-card {
+    background: var(--bg-white);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .card-content {
+    background: transparent;
+}
+
+.dark-mode .btn-primary {
+    background: var(--bg-white);
+    color: #60A5FA;
+    border-color: #60A5FA;
+}
+
+.dark-mode .btn-primary::before {
+    background: #60A5FA;
+}
+
+.dark-mode .btn-primary:hover {
+    color: var(--bg-main);
+}
+
+.dark-mode .modal-content, 
+.dark-mode .user-dropdown, 
+.dark-mode .video-detail-container, 
+.dark-mode .contact-container,
+.dark-mode .profile-container,
+.dark-mode .plan-card {
+    background: var(--bg-white);
+    border-color: var(--border-light);
+}
+
+.dark-mode .input-group input, 
+.dark-mode .input-group textarea,
+.dark-mode .input-group select {
+    background: #0B1120 !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-main) !important;
+}
+
+.dark-mode .input-group input:focus, 
+.dark-mode .input-group textarea:focus,
+.dark-mode .input-group select:focus {
+    border-color: #60A5FA !important;
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1) !important;
+}
+
+.dark-mode .banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: var(--border-light);
+}
+
+.dark-mode .video-thumbnail {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
+.dark-mode .video-title-bar {
+    border-bottom-color: var(--border-light);
+}
+
+/* Edit Full Article Button */
+.btn-edit-full {
+    background: #F59E0B;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.btn-edit-full:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4);
+}

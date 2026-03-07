@@ -42,6 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
 
             let adminToggle = document.getElementById('admin-toggle-btn');
+            const loginBtn = document.getElementById('nav-login-btn');
+
+            if (loginBtn) {
+                loginBtn.style.display = this.isLoggedIn ? 'none' : 'inline-block';
+            }
+
             if (this.role === 'ADMIN') {
                 if (!adminToggle) {
                     adminToggle = document.createElement('button');
@@ -63,6 +69,112 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.renderAdminControls();
+            this.renderFullEditButtons();
+        },
+
+        renderFullEditButtons() {
+            // Remove previous edit buttons
+            document.querySelectorAll('.btn-edit-full').forEach(btn => btn.remove());
+
+            if (this.role === 'ADMIN') {
+                document.querySelectorAll('.video-detail-container').forEach(container => {
+                    const articleId = container.closest('section').id.replace('view-', '');
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn-edit-full';
+                    editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> EDITAR ARTÍCULO COMPLETO';
+                    editBtn.onclick = () => this.openFullArticleModal(articleId);
+
+                    const titleBar = container.querySelector('.video-title-bar');
+                    if (titleBar) {
+                        titleBar.parentNode.insertBefore(editBtn, titleBar.nextSibling);
+                    }
+                });
+            }
+        },
+
+        openFullArticleModal(id) {
+            const section = document.getElementById(`view-${id}`);
+            if (!section) return;
+
+            const title = section.querySelector('.video-brand')?.textContent || '';
+            const content = section.querySelector('.video-description')?.innerHTML || '';
+
+            document.getElementById('full-edit-id').value = id;
+            document.getElementById('full-edit-title').value = title;
+            // Clean up extra spaces/newlines for the textarea
+            document.getElementById('full-edit-content').value = content.trim();
+
+            const modal = document.getElementById('edit-full-article-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+        },
+
+        saveFullArticle() {
+            const id = document.getElementById('full-edit-id').value;
+            const newTitle = document.getElementById('full-edit-title').value;
+            const newContent = document.getElementById('full-edit-content').value;
+
+            const section = document.getElementById(`view-${id}`);
+            if (section) {
+                if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = newTitle;
+                if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = newContent;
+            }
+
+            // Fallback Local Storage
+            let editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
+            editedFull[id] = { title: newTitle, content: newContent };
+            localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
+
+            // Cloudflare KV Sync (Will handle gracefully if endpoint doesn't support it yet)
+            fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent })
+            }).catch(err => console.error('Error syncing full article to Cloudflare KV:', err));
+
+            this.closeModal('edit-full-article-modal');
+            alert("Artículo modificado exitosamente.");
+        },
+
+        openSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+        },
+
+        closeSettingsModal() {
+            this.closeModal('settings-modal');
+        },
+
+        changeTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('rcn_theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('rcn_theme', 'light');
+            }
+        },
+
+        changeTextSize(size) {
+            document.documentElement.style.fontSize = size + 'px';
+            document.getElementById('text-size-display').textContent = size + 'px';
+            localStorage.setItem('rcn_text_size', size);
+        },
+
+        changeGlobalVolume(vol) {
+            // Apply volume to native videos
+            document.querySelectorAll('video').forEach(video => {
+                video.volume = vol;
+            });
+            // Apply to Plyr players by accessing their instance if possible, or trigger their API
+            window.players?.forEach(p => {
+                p.volume = vol;
+            });
+            localStorage.setItem('rcn_volume', vol);
         },
 
         toggleAdminMode() {
@@ -266,6 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('¡Pago procesado con éxito! Ahora disfrutas del plan ' + this.currentCheckoutPlan.name + '.');
 
             this.currentPlanId = this.currentCheckoutPlan.id;
+            // Guardar permanentemente la suscripción
+            localStorage.setItem('rcn_auth_plan', this.currentPlanId);
             this.updateUserBadge();
 
             if (document.getElementById('profile-phone').textContent === 'Sin registrar') {
@@ -274,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const badge = document.getElementById('profile-badge');
             badge.textContent = 'Plan ' + this.currentCheckoutPlan.name;
-            if (this.currentCheckoutPlan.id === 2) {
+            if (this.currentCheckoutPlan.id === 2 || this.role === 'ADMIN') {
                 badge.style.background = '#F59E0B'; // Gold for premium
                 badge.style.color = '#fff';
             } else {
@@ -283,6 +397,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.closeModal('checkout-modal');
+
+            // Refrescar para asegurar que la UI Premium aparezca
+            setTimeout(() => {
+                this.navigateTo('grid');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 500);
         },
 
         showLoginModal() {
@@ -339,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userNameLower = user.trim().toLowerCase();
                 if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
                     this.role = 'ADMIN';
+                    this.currentPlanId = 2; // Auto-grant Premium plan to Admin
                 } else {
                     this.role = 'USER';
                 }
@@ -613,6 +734,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+
+            // Apply Full Articles from Local Storage
+            const editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
+            for (const [id, data] of Object.entries(editedFull)) {
+                const section = document.getElementById(`view-${id}`);
+                if (section) {
+                    if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = data.title;
+                    if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = data.content;
+                }
+            }
         },
 
         startPreview(element) {
@@ -682,6 +813,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     app.applySavedAnnouncements();
+
+    // Apply Settings
+    const savedTheme = localStorage.getItem('rcn_theme');
+    const savedSize = localStorage.getItem('rcn_text_size');
+    const savedVol = localStorage.getItem('rcn_volume');
+
+    if (savedTheme === 'dark') {
+        app.changeTheme('dark');
+        const themeSelect = document.getElementById('settings-theme');
+        if (themeSelect) themeSelect.value = 'dark';
+    }
+    if (savedSize) {
+        app.changeTextSize(savedSize);
+        const sizeInput = document.getElementById('settings-text-size');
+        if (sizeInput) sizeInput.value = savedSize;
+    }
+    if (savedVol) {
+        app.changeGlobalVolume(savedVol);
+        const volInput = document.getElementById('settings-volume');
+        if (volInput) volInput.value = savedVol;
+    }
 
     // Add subtle staggered entrance animations to grid cards on load
     const animateCardsIn = () => {
