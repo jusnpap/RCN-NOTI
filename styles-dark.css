@@ -36,9 +36,9 @@ body.dark-mode {
     color: var(--bg-main);
 }
 
-.dark-mode .modal-content, 
-.dark-mode .user-dropdown, 
-.dark-mode .video-detail-container, 
+.dark-mode .modal-content,
+.dark-mode .user-dropdown,
+.dark-mode .video-detail-container,
 .dark-mode .contact-container,
 .dark-mode .profile-container,
 .dark-mode .plan-card {
@@ -46,7 +46,7 @@ body.dark-mode {
     border-color: var(--border-light);
 }
 
-.dark-mode .input-group input, 
+.dark-mode .input-group input,
 .dark-mode .input-group textarea,
 .dark-mode .input-group select {
     background: #0B1120 !important;
@@ -54,7 +54,7 @@ body.dark-mode {
     color: var(--text-main) !important;
 }
 
-.dark-mode .input-group input:focus, 
+.dark-mode .input-group input:focus,
 .dark-mode .input-group textarea:focus,
 .dark-mode .input-group select:focus {
     border-color: #60A5FA !important;
@@ -91,7 +91,19 @@ body.dark-mode {
     margin-bottom: 1rem;
 }
 
+
 .btn-edit-full:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4);
+}
+
+/* Fix for inline metrics boxes in dark mode */
+.dark-mode div[style*="background: #f8fafc"] {
+    background: var(--bg-white) !important;
+    border-left-color: #F59E0B !important;
+}
+
+.dark-mode div[style*="background: #f8fafc"] h4,
+.dark-mode div[style*="background: #f8fafc"] h3 {
+    color: var(--text-main) !important;
 }

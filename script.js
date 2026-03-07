@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.renderAdminControls();
             this.renderFullEditButtons();
+            this.renderDownloadButtons();
         },
 
         renderFullEditButtons() {
@@ -127,6 +128,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     const titleBar = container.querySelector('.video-title-bar');
                     if (titleBar) {
                         titleBar.parentNode.insertBefore(editBtn, titleBar.nextSibling);
+                    }
+                });
+            }
+        },
+
+        renderDownloadButtons() {
+            document.querySelectorAll('.btn-download-pdf-dynamic').forEach(btn => btn.remove());
+
+            if (this.currentPlanId === 2 || this.role === 'ADMIN') {
+                document.querySelectorAll('.video-detail-container').forEach(container => {
+                    // Evitar duplicar en los que ya tienen el boton estaticamente (Premium)
+                    const hasStaticBtn = !!Array.from(container.querySelectorAll('button')).find(btn => btn.textContent.includes('Descargar PDF'));
+
+                    if (!hasStaticBtn) {
+                        const downloadContainer = document.createElement('div');
+                        downloadContainer.className = 'btn-download-pdf-dynamic';
+                        downloadContainer.style.textAlign = 'center';
+                        downloadContainer.style.marginTop = '2rem';
+                        downloadContainer.style.marginBottom = '1.5rem';
+
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-primary';
+                        btn.style.background = 'var(--accent-blue)';
+                        btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Descargar PDF del Artículo';
+                        btn.onclick = () => alert('Generando PDF...');
+
+                        downloadContainer.appendChild(btn);
+
+                        // Insertar antes del botón de Volver
+                        const volverBtn = Array.from(container.querySelectorAll('button')).find(b => b.textContent.includes('Volver'));
+                        if (volverBtn) {
+                            volverBtn.parentNode.insertBefore(downloadContainer, volverBtn);
+                        } else {
+                            container.appendChild(downloadContainer);
+                        }
                     }
                 });
             }
