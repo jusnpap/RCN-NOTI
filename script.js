@@ -41,6 +41,24 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('display-username').innerHTML = `<i class="fa-regular fa-user" style="margin-right: 5px;"></i> ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
 
+            // Actualizar credencial de perfil
+            const profileBadge = document.getElementById('profile-badge');
+            if (profileBadge) {
+                if (this.currentPlanId === 2) {
+                    profileBadge.textContent = 'Plan Premium RCN';
+                    profileBadge.style.background = '#F59E0B';
+                    profileBadge.style.color = '#fff';
+                } else if (this.currentPlanId === 1) {
+                    profileBadge.textContent = 'Plan Estándar';
+                    profileBadge.style.background = 'var(--primary)';
+                    profileBadge.style.color = '#fff';
+                } else {
+                    profileBadge.textContent = 'Plan Básico';
+                    profileBadge.style.background = 'var(--bg-secondary)';
+                    profileBadge.style.color = 'var(--text-main)';
+                }
+            }
+
             let adminToggle = document.getElementById('admin-toggle-btn');
             const loginBtn = document.getElementById('nav-login-btn');
 
