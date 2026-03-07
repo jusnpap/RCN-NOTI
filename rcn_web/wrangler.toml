@@ -1,6 +1,0 @@
-name = "noticiero-rcn1"
-pages_build_output_dir = "./" # Actualizado porque tus archivos estáticos y index.html están en la raíz
-
-[[kv_namespaces]]
-binding = "KV_NOTICIAS"
-id = "04ee337e160e4d08a26026d426129b45"
