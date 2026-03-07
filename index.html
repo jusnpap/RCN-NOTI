@@ -73,8 +73,8 @@
             </div>
 
             <!-- Anuncio Prueba (Banner) -->
-            <div
-                style="background-color: #EF4444; color: white; text-align: center; padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; box-shadow: var(--shadow-md);">
+            <div class="anuncio-prueba-banner"
+                style="background-color: #EF4444; color: white; text-align: center; padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; box-shadow: var(--shadow-md); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;">
                 <h2
                     style="font-size: 4.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
                     Anuncio Prueba</h2>
@@ -1131,7 +1131,7 @@
         <!-- Modal: Editar Artículo Completo -->
         <div class="modal-overlay" id="edit-full-article-modal"
             onclick="if(event.target === this) app.closeModal('edit-full-article-modal')">
-            <div class="modal-content" style="max-width: 800px; width: 95%;">
+            <div class="modal-content" style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header">
                     <h3><i class="fa-solid fa-pen-nib" style="margin-right: 10px; color: var(--primary);"></i> Editor
                         Avanzado de Artículo</h3>
@@ -1148,14 +1148,23 @@
                         <label>Título del Artículo</label>
                         <input type="text" id="full-edit-title" placeholder="Título en grande">
                     </div>
+
+                    <!-- NEW: Importar documento -->
+                    <div class="input-group"
+                        style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--accent-blue); border-radius: 8px;">
+                        <label for="import-doc-file" style="color: var(--accent-blue);"><i
+                                class="fa-solid fa-file-import"></i> Auto-rellenar desde Documento (PDF o Word)</label>
+                        <input type="file" id="import-doc-file" accept=".pdf,.docx"
+                            style="padding: 0.5rem; background: white;" onchange="app.importTextFromFile(event)">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Sube un archivo
+                            para extraer automáticamente su texto hacia la caja de contenido abajo.</span>
+                    </div>
+
                     <div class="input-group">
-                        <label>Contenido del Artículo (HTML Soportado)</label>
-                        <textarea id="full-edit-content" rows="10"
+                        <label>Contenido del Artículo</label>
+                        <textarea id="full-edit-content" rows="6"
                             placeholder="Escribe el contenido completo del artículo aquí..."
                             style="resize: vertical; font-family: monospace; font-size: 0.9rem; line-height: 1.5; padding: 1rem; width: 100%; box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;"></textarea>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;"><i
-                                class="fa-solid fa-circle-info"></i> Puedes usar etiquetas HTML como &lt;p&gt;,
-                            &lt;h3&gt;, &lt;b&gt;, &lt;img&gt; para dar formato a la noticia.</span>
                     </div>
                     <div class="input-group" style="margin-top: 1rem;">
                         <label for="full-edit-video">Video Destacado del Artículo Completo (MP4/WebM)</label>
@@ -1189,6 +1198,9 @@
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <script src="script.js"></script>
 </body>
 

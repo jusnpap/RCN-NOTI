@@ -209,6 +209,33 @@ body {
     font-size: 0.9rem;
 }
 
+/* Anuncio Prueba Banner (Red Action) */
+.anuncio-prueba-banner {
+    position: relative;
+    overflow: hidden;
+}
+
+.anuncio-prueba-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+}
+
+.anuncio-prueba-banner:hover::before {
+    left: 150%;
+}
+
+.anuncio-prueba-banner:hover {
+    transform: translateY(-5px) scale(1.02) !important;
+    box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4) !important;
+}
+
 /* Grid */
 .grid-container {
     display: grid;

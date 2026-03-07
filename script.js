@@ -271,75 +271,216 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Artículo modificado exitosamente.");
         },
 
+        importTextFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const textArea = document.getElementById('full-edit-content');
+
+            const formatTextToHTML = (rawText) => {
+                // Remove existing html if any (unlikely from raw text, but good practice)
+                let text = rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                // Split by double newlines to find potential paragraphs
+                const paragraphs = text.split(/\n\s*\n/);
+
+                const formatted = paragraphs.map(p => {
+                    const trimmed = p.trim();
+                    if (!trimmed) return '';
+                    // If it's a short line, it might be a title/subtitle
+                    if (trimmed.length < 80 && !trimmed.endsWith('.')) {
+                        return `<h3><strong>${trimmed}</strong></h3>`;
+                    }
+                    return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+                }).filter(p => p !== '');
+
+                return formatted.join('\n\n');
+            };
+
+            if (ext === 'pdf') {
+                if (typeof pdfjsLib === 'undefined') {
+                    alert('La librería PDF no ha cargado correctamente.');
+                    return;
+                }
+                const fileReader = new FileReader();
+                fileReader.onload = async function () {
+                    const typedarray = new Uint8Array(this.result);
+                    try {
+                        const loadingTask = pdfjsLib.getDocument(typedarray);
+                        const pdf = await loadingTask.promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            // PDF.js lines are individual items. We try to guess line breaks if items have large Y gaps
+                            let lastY = -1;
+                            let pageText = '';
+                            for (const item of textContent.items) {
+                                if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 12) {
+                                    pageText += '\n'; // Add newline for significant vertical jump
+                                }
+                                pageText += item.str;
+                                lastY = item.transform[5];
+                            }
+                            fullText += pageText + '\n\n';
+                        }
+
+                        const htmlVersion = formatTextToHTML(fullText);
+
+                        if (textArea.value.trim() !== '') {
+                            textArea.value += '\n\n' + htmlVersion;
+                        } else {
+                            textArea.value = htmlVersion;
+                        }
+                        alert('Texto de PDF formateado y extraído exitosamente.');
+                    } catch (err) {
+                        console.error(err);
+                        alert('No se pudo extraer el texto del PDF.');
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else if (ext === 'doc' || ext === 'docx') {
+                if (typeof mammoth === 'undefined') {
+                    alert('La librería de Word no ha cargado correctamente.');
+                    return;
+                }
+                const fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    const arrayBuffer = e.target.result;
+                    // mammoth can extract HTML directly which is better
+                    mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                        .then(function (result) {
+                            const html = result.value; // The generated HTML
+                            if (textArea.value.trim() !== '') {
+                                textArea.value += '\n\n' + html.trim();
+                            } else {
+                                textArea.value = html.trim();
+                            }
+                            alert('Texto de Word formateado extraído exitosamente.');
+                        })
+                        .catch(function (err) {
+                            console.error(err);
+                            alert('No se pudo extraer el texto del documento Word.');
+                        });
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else {
+                alert('Formato no soportado. Sube un PDF o Word (.docx).');
+            }
+        },
+
         downloadPDF(container) {
             const titleEl = container.querySelector('.video-brand');
             const descEl = container.querySelector('.video-description');
 
-            if (!titleEl || !descEl) {
-                alert('No se pudo encontrar el contenido para descargar.');
+            if (!titleEl || !descEl || !window.jspdf) {
+                alert('No se pudo encontrar el contenido para descargar o la librería PDF no cargó.');
                 return;
             }
 
-            // Create a print container that will only be visible during print
-            const printContainer = document.createElement('div');
-            printContainer.id = 'print-container';
-            printContainer.style.padding = '40px';
-            printContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
-            printContainer.style.color = '#000';
-            printContainer.style.backgroundColor = '#fff';
+            const eventObj = window.event;
+            const btn = (eventObj && eventObj.currentTarget) || (container.querySelector('.fa-file-pdf') ? container.querySelector('.fa-file-pdf').closest('button') : null);
+            let originalHTML = '';
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+                btn.disabled = true;
+            }
 
-            const header = document.createElement('h1');
-            header.style.color = '#E63946';
-            header.style.borderBottom = '2px solid #E63946';
-            header.style.paddingBottom = '10px';
-            header.style.marginBottom = '20px';
-            header.textContent = titleEl.textContent;
-
-            const watermark = document.createElement('div');
-            watermark.style.position = 'fixed';
-            watermark.style.top = '50%';
-            watermark.style.left = '50%';
-            watermark.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
-            watermark.style.fontSize = '8rem';
-            watermark.style.color = 'rgba(230, 57, 70, 0.05)';
-            watermark.style.zIndex = '-1';
-            watermark.style.pointerEvents = 'none';
-            watermark.style.whiteSpace = 'nowrap';
-            watermark.textContent = 'RCN PREMIUM';
-
-            const contentBody = document.createElement('div');
-            contentBody.innerHTML = descEl.innerHTML;
-            contentBody.style.fontSize = '14px';
-            contentBody.style.lineHeight = '1.6';
-
-            const footer = document.createElement('div');
-            footer.style.marginTop = '40px';
-            footer.style.paddingTop = '20px';
-            footer.style.borderTop = '1px solid #cbd5e1';
-            footer.style.fontSize = '0.8rem';
-            footer.style.color = '#64748b';
-            footer.style.textAlign = 'center';
-            footer.innerHTML = `Descargado desde RCN Noticias en línea. Solo para uso personal por: <b>${this.currentUser || 'Invitado'}</b>.<br>Todos los derechos reservados.`;
-
-            printContainer.appendChild(watermark);
-            printContainer.appendChild(header);
-            printContainer.appendChild(contentBody);
-            printContainer.appendChild(footer);
-
-            document.body.appendChild(printContainer);
-
-            // Add temporary print styles classes to hide everything else
-            document.body.classList.add('printing-mode');
-
-            // Trigger print dialog (users can save as PDF)
+            // small timeout to allow UI update
             setTimeout(() => {
-                window.print();
-                // Clean up after print dialog closes
-                document.body.classList.remove('printing-mode');
-                if (document.body.contains(printContainer)) {
-                    document.body.removeChild(printContainer);
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const margin = 20;
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const maxLineWidth = pageWidth - margin * 2;
+                    let cursorY = 20;
+
+                    // Brand Watermark
+                    doc.setTextColor(245, 220, 220); // Very light red
+                    doc.setFontSize(50);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
+
+                    // Title
+                    doc.setTextColor(230, 57, 70); // Red
+                    doc.setFontSize(22);
+                    doc.setFont('helvetica', 'bold');
+                    const title = titleEl.textContent.trim();
+                    const titleLines = doc.splitTextToSize(title, maxLineWidth);
+                    doc.text(titleLines, margin, cursorY);
+                    cursorY += (titleLines.length * 10);
+
+                    // Separator Line
+                    doc.setDrawColor(230, 57, 70);
+                    doc.setLineWidth(0.5);
+                    doc.line(margin, cursorY - 4, pageWidth - margin, cursorY - 4);
+                    cursorY += 10;
+
+                    // Text Content
+                    doc.setTextColor(30, 41, 59); // Dark grey
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'normal');
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = descEl.innerHTML.replace(/<\/p>/gi, '\n\n').replace(/<br\s*[\/]?>/gi, '\n');
+                    const cleanText = tempDiv.textContent || tempDiv.innerText || "";
+
+                    const contentLines = doc.splitTextToSize(cleanText.trim(), maxLineWidth);
+
+                    contentLines.forEach(line => {
+                        if (cursorY > pageHeight - 30) {
+                            doc.addPage();
+                            cursorY = 20;
+                            // Re-draw watermark on new page
+                            doc.setTextColor(245, 220, 220);
+                            doc.setFontSize(50);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
+                            doc.setTextColor(30, 41, 59);
+                            doc.setFontSize(12);
+                            doc.setFont('helvetica', 'normal');
+                        }
+                        doc.text(line, margin, cursorY);
+                        cursorY += 7;
+                    });
+
+                    // Footer
+                    cursorY += 15;
+                    if (cursorY > pageHeight - 20) {
+                        doc.addPage();
+                        cursorY = 20;
+                    }
+                    doc.setDrawColor(203, 213, 225);
+                    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                    cursorY += 8;
+
+                    doc.setTextColor(100, 116, 139);
+                    doc.setFontSize(9);
+                    doc.text(`Descargado desde RCN Noticias. Usuario: ${this.currentUser || 'Invitado'}.`, pageWidth / 2, cursorY, { align: 'center' });
+                    doc.text('Todos los derechos reservados.', pageWidth / 2, cursorY + 5, { align: 'center' });
+
+                    const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                    doc.save(filename);
+
+                } catch (err) {
+                    console.error('PDF generation error:', err);
+                    alert('Hubo un error al generar el PDF de forma directa.');
+                } finally {
+                    if (btn) {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
                 }
-            }, 300);
+            }, 100);
         },
 
         openSettingsModal() {
