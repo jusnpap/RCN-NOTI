@@ -396,6 +396,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
+        formatCVV(input) {
+            input.value = input.value.replace(/\D/g, '');
+            if (input.value.length > 4) {
+                input.value = input.value.substring(0, 4);
+            }
+        },
+
         processCheckout() {
             const cardInput = document.getElementById('checkout-card').value;
             const expInput = document.getElementById('checkout-exp').value;
