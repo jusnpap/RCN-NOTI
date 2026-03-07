@@ -396,6 +396,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
+        formatCVV(input) {
+            input.value = input.value.replace(/\D/g, '');
+            if (input.value.length > 4) {
+                input.value = input.value.substring(0, 4);
+            }
+        },
+
         processCheckout() {
             const cardInput = document.getElementById('checkout-card').value;
             const expInput = document.getElementById('checkout-exp').value;
@@ -418,8 +425,19 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('¡Pago procesado con éxito! Ahora disfrutas del plan ' + this.currentCheckoutPlan.name + '.');
 
             this.currentPlanId = this.currentCheckoutPlan.id;
-            // Guardar permanentemente la suscripción
+            // Guardar permanentemente la suscripción para la sesión actual
             localStorage.setItem('rcn_auth_plan', this.currentPlanId);
+
+            // Gurdar el plan específicamente en la cuenta del usuario para no perderlo al cambiar de sesión
+            if (this.role !== 'ADMIN' && this.currentUser) {
+                let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+                const userNameLower = this.currentUser.toLowerCase();
+                if (registeredUsers[userNameLower]) {
+                    registeredUsers[userNameLower].planId = this.currentPlanId;
+                    localStorage.setItem('rcn_registered_users', JSON.stringify(registeredUsers));
+                }
+            }
+
             this.updateUserBadge();
 
             if (document.getElementById('profile-phone').textContent === 'Sin registrar') {
@@ -489,45 +507,73 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (mode === 'register') {
                 user = document.getElementById('reg-username').value;
                 pwd = document.getElementById('reg-password').value;
-                alert('¡Cuenta creada con éxito! Bienvenido ' + user);
             }
 
-            if (user.trim() !== '') {
-                this.isLoggedIn = true;
-                this.currentUser = user.trim().toUpperCase();
+            if (!user.trim() || !pwd.trim()) {
+                alert('Por favor, completa todos los campos para ingresar.');
+                return;
+            }
 
-                const userNameLower = user.trim().toLowerCase();
-                if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
-                    this.role = 'ADMIN';
-                    this.currentPlanId = 2; // Auto-grant Premium plan to Admin
-                } else {
-                    this.role = 'USER';
+            const userNameLower = user.trim().toLowerCase();
+            const isAdmin = (userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25';
+
+            let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+
+            if (mode === 'register') {
+                if (registeredUsers[userNameLower] || isAdmin) {
+                    alert('Este nombre de usuario ya está registrado o no está disponible.');
+                    return;
                 }
-
-                localStorage.setItem('rcn_auth_user', this.currentUser);
-                localStorage.setItem('rcn_auth_role', this.role);
-                localStorage.setItem('rcn_auth_plan', this.currentPlanId);
-
-                this.updateUserBadge();
-
-                const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
-                if (document.getElementById('dropdown-avatar')) {
-                    document.getElementById('dropdown-avatar').src = avatarUrl;
+                registeredUsers[userNameLower] = { pwd: pwd, planId: 0 };
+                localStorage.setItem('rcn_registered_users', JSON.stringify(registeredUsers));
+                alert('¡Cuenta creada con éxito! Bienvenido ' + user);
+            } else if (mode === 'login') {
+                if (!isAdmin) {
+                    if (!registeredUsers[userNameLower]) {
+                        alert('Este usuario no existe. Por favor, regístrate primero.');
+                        return;
+                    }
+                    if (registeredUsers[userNameLower].pwd !== pwd) {
+                        alert('Contraseña incorrecta.');
+                        return;
+                    }
                 }
-                if (document.getElementById('profile-avatar')) {
-                    document.getElementById('profile-avatar').src = avatarUrl + '&size=120';
-                    document.getElementById('profile-name-title').textContent = this.currentUser;
-                    document.getElementById('profile-email').textContent = `${user.trim().toLowerCase()}@correo.com`;
-                }
+            }
 
-                this.closeLoginModal();
+            this.isLoggedIn = true;
+            this.currentUser = user.trim().toUpperCase();
 
-                if (this.pendingView) {
-                    this.navigateTo(this.pendingView);
-                    this.pendingView = null;
-                }
+            if (isAdmin) {
+                this.role = 'ADMIN';
+                this.currentPlanId = 2; // Auto-grant Premium plan to Admin
             } else {
-                alert("Por favor ingresa un valor válido.");
+                this.role = 'USER';
+                this.currentPlanId = registeredUsers[userNameLower].planId || 0;
+            }
+
+            localStorage.setItem('rcn_auth_user', this.currentUser);
+            localStorage.setItem('rcn_auth_role', this.role);
+            localStorage.setItem('rcn_auth_plan', this.currentPlanId);
+
+            this.updateUserBadge();
+
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
+            if (document.getElementById('dropdown-avatar')) {
+                document.getElementById('dropdown-avatar').src = avatarUrl;
+            }
+            if (document.getElementById('profile-avatar')) {
+                document.getElementById('profile-avatar').src = avatarUrl + '&size=120';
+                document.getElementById('profile-name-title').textContent = this.currentUser;
+                document.getElementById('profile-email').textContent = `${user.trim().toLowerCase()}@correo.com`;
+            }
+
+            this.closeLoginModal();
+
+            if (this.pendingView) {
+                this.navigateTo(this.pendingView);
+                this.pendingView = null;
+            } else {
+                this.updateUserBadge();
             }
         },
 

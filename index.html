@@ -960,7 +960,7 @@
                         <div class="input-group" style="flex: 1;">
                             <label for="checkout-cvv">CVV</label>
                             <input type="text" id="checkout-cvv" required placeholder="123" maxlength="4"
-                                oninput="this.value = this.value.replace(/\\D/g, '')">
+                                oninput="app.formatCVV(this)">
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom: 1.5rem;">
