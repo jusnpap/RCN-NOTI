@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isLoggedIn: false,
         currentUser: null,
         currentPlanId: 0,
+        role: 'USER',
         pendingView: null,
 
         updateUserBadge() {
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!this.isLoggedIn) {
                 document.getElementById('display-username').innerHTML = '<i class="fa-regular fa-user" style="margin-right: 5px;"></i> LOG IN';
                 if (premiumSection) premiumSection.style.display = 'none';
+                this.renderAdminControls();
                 return;
             }
 
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('display-username').innerHTML = `<i class="fa-regular fa-user" style="margin-right: 5px;"></i> ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
+            this.renderAdminControls();
         },
 
         requireAuthAndNavigate(viewId) {
@@ -110,6 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.isLoggedIn = false;
             this.currentUser = null;
             this.currentPlanId = 0;
+            this.role = 'USER';
+            
+            localStorage.removeItem('rcn_auth_user');
+            localStorage.removeItem('rcn_auth_role');
+            localStorage.removeItem('rcn_auth_plan');
+
             this.updateUserBadge();
             document.getElementById('user-dropdown').classList.remove('active');
 
@@ -283,16 +292,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         submitAuth(mode) {
             let user = '';
+            let pwd = '';
             if (mode === 'login') {
                 user = document.getElementById('login-username').value;
+                pwd = document.getElementById('login-password').value;
             } else if (mode === 'register') {
                 user = document.getElementById('reg-username').value;
+                pwd = document.getElementById('reg-password').value;
                 alert('¡Cuenta creada con éxito! Bienvenido ' + user);
             }
 
             if (user.trim() !== '') {
                 this.isLoggedIn = true;
                 this.currentUser = user.trim().toUpperCase();
+
+                if (user.trim() === 'juanp_nanrvaez' && pwd === 'Noviembre25') {
+                    this.role = 'ADMIN';
+                } else {
+                    this.role = 'USER';
+                }
+
+                localStorage.setItem('rcn_auth_user', this.currentUser);
+                localStorage.setItem('rcn_auth_role', this.role);
+                localStorage.setItem('rcn_auth_plan', this.currentPlanId);
+
                 this.updateUserBadge();
 
                 const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
@@ -313,6 +336,216 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 alert("Por favor ingresa un valor válido.");
+            }
+        },
+
+        renderAdminControls() {
+            const cards = document.querySelectorAll('.video-card');
+            cards.forEach(card => {
+                const existingControls = card.querySelector('.admin-controls');
+                if (existingControls) existingControls.remove();
+
+                if (this.role === 'ADMIN') {
+                    const controls = document.createElement('div');
+                    controls.className = 'admin-controls';
+                    controls.style.position = 'absolute';
+                    controls.style.top = '10px';
+                    controls.style.right = '10px';
+                    controls.style.zIndex = '10';
+                    controls.style.display = 'flex';
+                    controls.style.gap = '8px';
+
+                    const btnEdit = document.createElement('button');
+                    btnEdit.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                    btnEdit.style.background = '#3B82F6';
+                    btnEdit.style.color = 'white';
+                    btnEdit.style.border = 'none';
+                    btnEdit.style.width = '36px';
+                    btnEdit.style.height = '36px';
+                    btnEdit.style.borderRadius = '50%';
+                    btnEdit.style.cursor = 'pointer';
+                    btnEdit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    btnEdit.title = "Editar Anuncio";
+                    btnEdit.onclick = (e) => {
+                        e.stopPropagation();
+                        this.openEditAnnouncement(card.getAttribute('data-id'));
+                    };
+
+                    const btnDelete = document.createElement('button');
+                    btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                    btnDelete.style.background = '#EF4444';
+                    btnDelete.style.color = 'white';
+                    btnDelete.style.border = 'none';
+                    btnDelete.style.width = '36px';
+                    btnDelete.style.height = '36px';
+                    btnDelete.style.borderRadius = '50%';
+                    btnDelete.style.cursor = 'pointer';
+                    btnDelete.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    btnDelete.title = "Eliminar Anuncio";
+                    btnDelete.onclick = (e) => {
+                        e.stopPropagation();
+                        this.deleteAnnouncement(card.getAttribute('data-id'));
+                    };
+
+                    controls.appendChild(btnEdit);
+                    controls.appendChild(btnDelete);
+                    card.appendChild(controls);
+
+                    if (window.getComputedStyle(card).position === 'static') {
+                        card.style.position = 'relative';
+                    }
+                }
+            });
+        },
+
+        deleteAnnouncement(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este anuncio para siempre?')) {
+                const card = document.querySelector(`.video-card[data-id="${id}"]`);
+                if (card) {
+                    card.style.display = 'none';
+                }
+                
+                let deletedIds = JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
+                if (!deletedIds.includes(id)) {
+                    deletedIds.push(id);
+                    localStorage.setItem('rcn_deleted_announcements', JSON.stringify(deletedIds));
+                }
+            }
+        },
+
+        openEditAnnouncement(id) {
+            const card = document.querySelector(`.video-card[data-id="${id}"]`);
+            if (!card) return;
+
+            const title = card.querySelector('.news-summary-title')?.textContent || '';
+            const desc = card.querySelector('.news-summary-text')?.textContent || '';
+            const badge = card.querySelector('.card-badge')?.textContent || '';
+            
+            let imgUrl = '';
+            const imgElement = card.querySelector('img');
+            const videoElement = card.querySelector('video source');
+            
+            if (imgElement) {
+                imgUrl = imgElement.src;
+            } else if (videoElement) {
+                // If it's a video, we might show a placeholder or its poster.
+                imgUrl = '';
+            }
+
+            document.getElementById('edit-announcement-id').value = id;
+            document.getElementById('edit-announcement-title').value = title;
+            document.getElementById('edit-announcement-desc').value = desc;
+            document.getElementById('edit-announcement-badge').value = badge;
+            document.getElementById('edit-announcement-img').value = imgUrl;
+
+            const modal = document.getElementById('edit-announcement-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight; // Reflow
+            modal.classList.add('active');
+        },
+
+        saveAnnouncementEdit() {
+            const id = document.getElementById('edit-announcement-id').value;
+            const title = document.getElementById('edit-announcement-title').value;
+            const desc = document.getElementById('edit-announcement-desc').value;
+            const badgeTxt = document.getElementById('edit-announcement-badge').value;
+            const imgUrl = document.getElementById('edit-announcement-img').value;
+
+            const card = document.querySelector(`.video-card[data-id="${id}"]`);
+            if (card) {
+                if (card.querySelector('.news-summary-title')) card.querySelector('.news-summary-title').textContent = title;
+                if (card.querySelector('.news-summary-text')) card.querySelector('.news-summary-text').textContent = desc;
+                
+                const badgeEl = card.querySelector('.card-badge');
+                if (badgeEl) {
+                    if (badgeTxt.trim().length > 0) {
+                        badgeEl.textContent = badgeTxt;
+                        badgeEl.style.display = 'inline-block';
+                    } else {
+                        badgeEl.style.display = 'none';
+                    }
+                }
+
+                if (imgUrl.trim().length > 0) {
+                    const thumbContainer = card.querySelector('.video-thumbnail');
+                    if (thumbContainer) {
+                        const oldVideo = thumbContainer.querySelector('video');
+                        const oldImg = thumbContainer.querySelector('img');
+                        if (oldVideo) oldVideo.remove();
+                        if (oldImg) oldImg.remove();
+                        const oldIcon = thumbContainer.querySelector('.play-icon, .fa-newspaper, .fa-chart-line, .fa-microscope'); 
+                        
+                        const newImg = document.createElement('img');
+                        newImg.src = imgUrl;
+                        newImg.style.position = 'absolute';
+                        newImg.style.width = '100%';
+                        newImg.style.height = '100%';
+                        newImg.style.objectFit = 'cover';
+                        newImg.style.zIndex = '1';
+                        newImg.style.borderRadius = 'var(--radius-md) var(--radius-md) 0 0';
+                        thumbContainer.insertBefore(newImg, thumbContainer.firstChild);
+                        
+                        // Push old icons behind or adjust z-index
+                        if (oldIcon && oldIcon.classList.contains('play-icon')) {
+                            oldIcon.style.zIndex = '2';
+                        }
+                    }
+                }
+            }
+
+            let edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
+            edited[id] = { title, desc, badgeTxt, imgUrl };
+            localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
+
+            this.closeModal('edit-announcement-modal');
+        },
+
+        applySavedAnnouncements() {
+            const deletedIds = JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
+            deletedIds.forEach(id => {
+                const card = document.querySelector(`.video-card[data-id="${id}"]`);
+                if (card) {
+                    card.style.display = 'none';
+                }
+            });
+
+            const edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
+            for (const [id, data] of Object.entries(edited)) {
+                const card = document.querySelector(`.video-card[data-id="${id}"]`);
+                if (card) {
+                    if (card.querySelector('.news-summary-title')) card.querySelector('.news-summary-title').textContent = data.title;
+                    if (card.querySelector('.news-summary-text')) card.querySelector('.news-summary-text').textContent = data.desc;
+                    
+                    const badgeEl = card.querySelector('.card-badge');
+                    if (badgeEl) {
+                        if (data.badgeTxt.trim().length > 0) {
+                            badgeEl.textContent = data.badgeTxt;
+                            badgeEl.style.display = 'inline-block';
+                        } else {
+                            badgeEl.style.display = 'none';
+                        }
+                    }
+
+                    if (data.imgUrl.trim().length > 0) {
+                        const thumbContainer = card.querySelector('.video-thumbnail');
+                        if (thumbContainer) {
+                            const oldVideo = thumbContainer.querySelector('video');
+                            const oldImg = thumbContainer.querySelector('img');
+                            if (oldVideo) oldVideo.remove();
+                            if (oldImg) oldImg.remove();
+                            
+                            const newImg = document.createElement('img');
+                            newImg.src = data.imgUrl;
+                            newImg.style.position = 'absolute';
+                            newImg.style.width = '100%';
+                            newImg.style.height = '100%';
+                            newImg.style.objectFit = 'cover';
+                            newImg.style.zIndex = '1';
+                            newImg.style.borderRadius = 'var(--radius-md) var(--radius-md) 0 0';
+                            thumbContainer.insertBefore(newImg, thumbContainer.firstChild);
+                        }
+                    }
+                }
             }
         },
 
@@ -368,6 +601,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Expose app to global scope for inline handlers
     window.app = app;
+
+    // Restore session and Apply saved changes
+    const savedUser = localStorage.getItem('rcn_auth_user');
+    const savedRole = localStorage.getItem('rcn_auth_role');
+    const savedPlan = localStorage.getItem('rcn_auth_plan');
+
+    if (savedUser) {
+        app.isLoggedIn = true;
+        app.currentUser = savedUser;
+        app.role = savedRole || 'USER';
+        app.currentPlanId = parseInt(savedPlan) || 0;
+        app.updateUserBadge();
+    }
+    
+    app.applySavedAnnouncements();
 
     // Add subtle staggered entrance animations to grid cards on load
     const animateCardsIn = () => {
