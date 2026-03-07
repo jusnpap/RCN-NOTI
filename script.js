@@ -132,27 +132,75 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.classList.add('active');
         },
 
-        saveFullArticle() {
+        async saveFullArticle() {
             const id = document.getElementById('full-edit-id').value;
             const newTitle = document.getElementById('full-edit-title').value;
             const newContent = document.getElementById('full-edit-content').value;
+            const videoInput = document.getElementById('full-edit-video');
+
+            let videoUrl = '';
+
+            if (videoInput && videoInput.files && videoInput.files[0]) {
+                const file = videoInput.files[0];
+                if (file.size > 22 * 1024 * 1024) {
+                    alert("El archivo de video es demasiado grande. Límite máximo: 22MB.");
+                    return;
+                }
+
+                try {
+                    videoUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(file);
+                    });
+                } catch (e) {
+                    console.error("No se pudo leer el archivo de video", e);
+                    alert("Hubo un error procesando el archivo de video.");
+                    return;
+                }
+            }
 
             const section = document.getElementById(`view-${id}`);
             if (section) {
                 if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = newTitle;
                 if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = newContent;
+
+                if (videoUrl.trim().length > 0) {
+                    const playerContainer = section.querySelector('.main-video-player');
+                    if (playerContainer) {
+                        let videoEl = playerContainer.querySelector('video');
+                        if (!videoEl) {
+                            videoEl = document.createElement('video');
+                            videoEl.className = 'plyr-video';
+                            videoEl.setAttribute('playsinline', '');
+                            videoEl.setAttribute('controls', '');
+                            videoEl.style.width = '100%';
+                            playerContainer.appendChild(videoEl);
+                        }
+
+                        while (videoEl.firstChild) {
+                            videoEl.removeChild(videoEl.firstChild);
+                        }
+
+                        const source = document.createElement('source');
+                        source.src = videoUrl;
+                        videoEl.appendChild(source);
+                        videoEl.load();
+                    }
+                }
             }
 
             // Fallback Local Storage
             let editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
-            editedFull[id] = { title: newTitle, content: newContent };
+            editedFull[id] = { title: newTitle, content: newContent, videoUrl: videoUrl };
             localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
 
             // Cloudflare KV Sync (Will handle gracefully if endpoint doesn't support it yet)
             fetch('/api/announcements', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent })
+                body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent, videoUrl: videoUrl })
             }).catch(err => console.error('Error syncing full article to Cloudflare KV:', err));
 
             this.closeModal('edit-full-article-modal');
@@ -216,10 +264,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         navigateTo(viewId) {
             if (viewId.startsWith('premium-') && this.currentPlanId !== 2) {
-                alert('Este contenido es exclusivo para usuarios con Plan Premium RCN. Adquiere el plan para continuar.');
+                alert('Este contenido VIP es exclusivo para usuarios con Plan Premium RCN. Adquiere el plan para continuar.');
                 this.navigateTo('profile');
                 return;
             }
+
+            const standardExclusive = ['video-4', 'video-5', 'video-6', 'video-7', 'video-8', 'video-9', 'video-10'];
+            if (standardExclusive.includes(viewId) && this.currentPlanId < 1) {
+                alert('Este artículo extendido es exclusivo para usuarios con Plan Estándar o superior. Sube de nivel para leerlo.');
+                this.navigateTo('profile');
+                return;
+            }
+
             if (this.currentView === viewId || this.isAnimating) return;
 
             this.isAnimating = true;
@@ -910,6 +966,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (section) {
                     if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = data.title;
                     if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = data.content;
+
+                    if (data.videoUrl && data.videoUrl.trim().length > 0) {
+                        const playerContainer = section.querySelector('.main-video-player');
+                        if (playerContainer) {
+                            let videoEl = playerContainer.querySelector('video');
+                            if (!videoEl) {
+                                videoEl = document.createElement('video');
+                                videoEl.className = 'plyr-video';
+                                videoEl.setAttribute('playsinline', '');
+                                videoEl.setAttribute('controls', '');
+                                videoEl.style.width = '100%';
+                                playerContainer.appendChild(videoEl);
+                            }
+
+                            while (videoEl.firstChild) {
+                                videoEl.removeChild(videoEl.firstChild);
+                            }
+
+                            const source = document.createElement('source');
+                            source.src = data.videoUrl;
+                            videoEl.appendChild(source);
+                            videoEl.load();
+                        }
+                    }
                 }
             }
         },

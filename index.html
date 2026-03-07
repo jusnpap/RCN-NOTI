@@ -155,7 +155,8 @@
                         <i class="fa-solid fa-play play-icon" style="z-index: 2;"></i>
                     </div>
                     <div class="card-content">
-                        <div class="card-badge">INTERNACIONAL</div>
+                        <div class="card-badge" style="background-color: var(--primary);"><i
+                                class="fa-solid fa-lock"></i> ESTÁNDAR</div>
                         <h3 class="news-summary-title">Acuerdo de conservación</h3>
                         <p class="news-summary-text">Varias naciones logran un importante acuerdo para proteger
                             arrecifes coralinos clave en la región oceánica del sur.</p>
@@ -174,7 +175,8 @@
                         <i class="fa-solid fa-play play-icon" style="z-index: 2;"></i>
                     </div>
                     <div class="card-content">
-                        <div class="card-badge">DEPORTES</div>
+                        <div class="card-badge" style="background-color: var(--primary);"><i
+                                class="fa-solid fa-lock"></i> ESTÁNDAR</div>
                         <h3 class="news-summary-title">Victoria histórica</h3>
                         <p class="news-summary-text">El equipo nacional remonta en el último minuto coronándose campeón
                             continental tras 15 años de sequía.</p>
@@ -778,9 +780,9 @@
                         <h4>Básico</h4>
                         <div class="plan-price">$0<span>/mes</span></div>
                         <ul class="plan-features">
-                            <li><i class="fa-solid fa-check"></i> Acceso a noticias primarias</li>
+                            <li><i class="fa-solid fa-check"></i> Resúmenes básicos</li>
                             <li><i class="fa-solid fa-check"></i> Uso del formulario web</li>
-                            <li><i class="fa-solid fa-xmark" style="color:#d1d5db;"></i> Videos sin anuncios</li>
+                            <li><i class="fa-solid fa-xmark" style="color:#d1d5db;"></i> Reportajes completos</li>
                         </ul>
                         <button class="btn-outline plan-btn-active">Plan Actual</button>
                     </div>
@@ -789,9 +791,10 @@
                     <div class="plan-card" id="plan-1">
                         <h4>Estándar</h4>
                         <div class="plan-price">$2.99<span>/mes</span></div>
-                        <ul class="plan-features">
-                            <li><i class="fa-solid fa-check"></i> Todo lo Básico</li>
-                            <li><i class="fa-solid fa-check"></i> Visualización Completa</li>
+                        <ul class="plan-features" style="min-height: 180px;">
+                            <li><i class="fa-solid fa-check"></i> Lectura extendida de artículos</li>
+                            <li><i class="fa-solid fa-check"></i> Boletín semanal al correo</li>
+                            <li><i class="fa-solid fa-check"></i> Personalización de lectura</li>
                             <li><i class="fa-solid fa-check"></i> Videos sin anuncios</li>
                         </ul>
                         <div class="plan-action">
@@ -805,10 +808,15 @@
                         <div class="plan-badge">RECOMENDADO</div>
                         <h4>Premium RCN</h4>
                         <div class="plan-price">$7.99<span>/mes</span></div>
-                        <ul class="plan-features">
-                            <li><i class="fa-solid fa-check"></i> Todo lo Estándar</li>
-                            <li><i class="fa-solid fa-check"></i> Artículos exclusivos</li>
-                            <li><i class="fa-solid fa-check"></i> Insignia VIP en perfil</li>
+                        <ul class="plan-features" style="min-height: 180px;">
+                            <li><i class="fa-solid fa-star" style="color:var(--secondary);"></i> <b>Reportajes VIP sin
+                                    restricción</b></li>
+                            <li><i class="fa-solid fa-bolt" style="color:var(--secondary);"></i> Prioridad y "Breaking
+                                News"</li>
+                            <li><i class="fa-solid fa-crown" style="color:var(--secondary);"></i> Etiqueta VIP dorada y
+                                modo privado</li>
+                            <li><i class="fa-solid fa-file-pdf" style="color:var(--secondary);"></i> Descarga PDF de
+                                artículos</li>
                         </ul>
                         <div class="plan-action">
                             <button class="btn-primary" style="background:var(--accent-blue);"
@@ -1078,7 +1086,7 @@
                         <label>Título del Artículo</label>
                         <input type="text" id="full-edit-title" placeholder="Título en grande">
                     </div>
-                    <div class="input-group" style="flex-grow: 1;">
+                    <div class="input-group">
                         <label>Contenido del Artículo (HTML Soportado)</label>
                         <textarea id="full-edit-content" rows="15"
                             placeholder="Escribe el contenido completo del artículo aquí..."
@@ -1086,6 +1094,12 @@
                         <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;"><i
                                 class="fa-solid fa-circle-info"></i> Puedes usar etiquetas HTML como &lt;p&gt;,
                             &lt;h3&gt;, &lt;b&gt;, &lt;img&gt; para dar formato a la noticia.</span>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label for="full-edit-video">Video Destacado del Artículo Completo (MP4/WebM)</label>
+                        <input type="file" id="full-edit-video" accept="video/mp4,video/webm" style="padding: 0.8rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Al subir un video y
+                            guardar, reemplazará al video actual o portada si existe.</span>
                     </div>
                     <button class="btn-primary" onclick="app.saveFullArticle()" style="margin-top: 1rem;">
                         <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i> Guardar Edición Profunda
