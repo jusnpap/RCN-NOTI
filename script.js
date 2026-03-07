@@ -418,8 +418,19 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('¡Pago procesado con éxito! Ahora disfrutas del plan ' + this.currentCheckoutPlan.name + '.');
 
             this.currentPlanId = this.currentCheckoutPlan.id;
-            // Guardar permanentemente la suscripción
+            // Guardar permanentemente la suscripción para la sesión actual
             localStorage.setItem('rcn_auth_plan', this.currentPlanId);
+
+            // Gurdar el plan específicamente en la cuenta del usuario para no perderlo al cambiar de sesión
+            if (this.role !== 'ADMIN' && this.currentUser) {
+                let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+                const userNameLower = this.currentUser.toLowerCase();
+                if (registeredUsers[userNameLower]) {
+                    registeredUsers[userNameLower].planId = this.currentPlanId;
+                    localStorage.setItem('rcn_registered_users', JSON.stringify(registeredUsers));
+                }
+            }
+
             this.updateUserBadge();
 
             if (document.getElementById('profile-phone').textContent === 'Sin registrar') {
@@ -496,19 +507,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const userNameLower = user.trim().toLowerCase();
+            const isAdmin = (userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25';
+
+            let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+
             if (mode === 'register') {
+                if (registeredUsers[userNameLower] || isAdmin) {
+                    alert('Este nombre de usuario ya está registrado o no está disponible.');
+                    return;
+                }
+                registeredUsers[userNameLower] = { pwd: pwd, planId: 0 };
+                localStorage.setItem('rcn_registered_users', JSON.stringify(registeredUsers));
                 alert('¡Cuenta creada con éxito! Bienvenido ' + user);
+            } else if (mode === 'login') {
+                if (!isAdmin) {
+                    if (!registeredUsers[userNameLower]) {
+                        alert('Este usuario no existe. Por favor, regístrate primero.');
+                        return;
+                    }
+                    if (registeredUsers[userNameLower].pwd !== pwd) {
+                        alert('Contraseña incorrecta.');
+                        return;
+                    }
+                }
             }
 
             this.isLoggedIn = true;
             this.currentUser = user.trim().toUpperCase();
 
-            const userNameLower = user.trim().toLowerCase();
-            if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
+            if (isAdmin) {
                 this.role = 'ADMIN';
                 this.currentPlanId = 2; // Auto-grant Premium plan to Admin
             } else {
                 this.role = 'USER';
+                this.currentPlanId = registeredUsers[userNameLower].planId || 0;
             }
 
             localStorage.setItem('rcn_auth_user', this.currentUser);
