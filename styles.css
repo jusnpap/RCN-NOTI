@@ -1190,3 +1190,33 @@ a.video-card {
     gap: 1rem;
     margin-top: 1.5rem;
 }
+
+/* --- Print Styles --- */
+@media print {
+
+    body.printing-mode nav,
+    body.printing-mode .view,
+    body.printing-mode .page-header,
+    body.printing-mode .btn-outline,
+    body.printing-mode .modal-overlay,
+    body.printing-mode>div:not(#print-container) {
+        display: none !important;
+    }
+
+    body.printing-mode #app-container {
+        display: none !important;
+    }
+
+    #print-container {
+        display: block !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Force background colors to print if user has it enabled, and remove margins */
+    @page {
+        margin: 1cm;
+        size: auto;
+    }
+}

@@ -72,6 +72,14 @@
                 <h1 id="anuncios-title" class="page-title">RCN-NOTICIAS</h1>
             </div>
 
+            <!-- Anuncio Prueba (Banner) -->
+            <div
+                style="background-color: #EF4444; color: white; text-align: center; padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; box-shadow: var(--shadow-md);">
+                <h2
+                    style="font-size: 4.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+                    Anuncio Prueba</h2>
+            </div>
+
             <div class="grid-container">
                 <!-- Video 1 -->
                 <a href="#video-1" class="video-card" data-id="video-1"
@@ -586,6 +594,45 @@
                     <p>Tras semanas de incertidumbre, los mercados locales han cerrado con alzas espectaculares.
                         Analistas sugieren que esto se debe principalmente a las reformas fiscales recientemente
                         aprobadas que promueven la estabilidad.</p>
+                </div>
+
+                <button class="btn-outline" onclick="app.navigateTo('grid')">Volver</button>
+            </div>
+        </section>
+
+        <!-- View Video 8 (Prueba) -->
+        <section id="view-video-8" class="view" aria-labelledby="video-title-8">
+            <div class="video-detail-container">
+                <div class="video-header">
+                    <span class="badge-red">INFORMACIÓN</span>
+                </div>
+                <div class="video-title-bar">
+                    <h2 id="video-title-8" class="video-brand">Anuncio de prueba</h2>
+                    <div class="social-icons dark">
+                        <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="main-video-player" style="background: none; box-shadow: none;">
+                    <video class="plyr-video" playsinline controls data-poster="" style="width: 100%;">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="1080">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="720">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="480">
+                        Tu navegador no soporta reproducción de video.
+                    </video>
+                </div>
+
+                <div class="video-description scrollable-content">
+                    <h3>Prueba de generación de PDF</h3>
+                    <p>Este es un texto largo de prueba para verificar que el sistema de descarga de PDF funciona
+                        correctamente.
+                        En versiones anteriores, la biblioteca html2pdf encontraba dificultades porque este contenido no
+                        estaba conectado
+                        directamente al DOM de cierta manera, resultando en páginas en blanco.</p>
+                    <p>Al hacer clic en descargar, el generador deberá capturar este texto fielmente con sus respectivos
+                        formatos y
+                        generar un archivo PDF visible.</p>
                 </div>
 
                 <button class="btn-outline" onclick="app.navigateTo('grid')">Volver</button>
@@ -1142,7 +1189,6 @@
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 

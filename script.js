@@ -280,16 +280,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const clonedDesc = descEl.cloneNode(true);
-
-            // Clean up styles for PDF
-            clonedDesc.style.maxHeight = 'none';
-            clonedDesc.style.overflow = 'visible';
-
-            const pdfContent = document.createElement('div');
-            pdfContent.style.padding = '40px';
-            pdfContent.style.fontFamily = 'Helvetica, Arial, sans-serif';
-            pdfContent.style.color = '#1e293b';
+            // Create a print container that will only be visible during print
+            const printContainer = document.createElement('div');
+            printContainer.id = 'print-container';
+            printContainer.style.padding = '40px';
+            printContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
+            printContainer.style.color = '#000';
+            printContainer.style.backgroundColor = '#fff';
 
             const header = document.createElement('h1');
             header.style.color = '#E63946';
@@ -310,6 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
             watermark.style.whiteSpace = 'nowrap';
             watermark.textContent = 'RCN PREMIUM';
 
+            const contentBody = document.createElement('div');
+            contentBody.innerHTML = descEl.innerHTML;
+            contentBody.style.fontSize = '14px';
+            contentBody.style.lineHeight = '1.6';
+
             const footer = document.createElement('div');
             footer.style.marginTop = '40px';
             footer.style.paddingTop = '20px';
@@ -319,37 +321,25 @@ document.addEventListener('DOMContentLoaded', () => {
             footer.style.textAlign = 'center';
             footer.innerHTML = `Descargado desde RCN Noticias en línea. Solo para uso personal por: <b>${this.currentUser || 'Invitado'}</b>.<br>Todos los derechos reservados.`;
 
-            pdfContent.appendChild(watermark);
-            pdfContent.appendChild(header);
-            pdfContent.appendChild(clonedDesc);
-            pdfContent.appendChild(footer);
+            printContainer.appendChild(watermark);
+            printContainer.appendChild(header);
+            printContainer.appendChild(contentBody);
+            printContainer.appendChild(footer);
 
-            // Hide the actual button and show a loading state
-            const btn = event.currentTarget || container.querySelector('.fa-file-pdf').closest('button');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
-            btn.disabled = true;
+            document.body.appendChild(printContainer);
 
-            const opt = {
-                margin: 10,
-                filename: `${titleEl.textContent.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            // Add temporary print styles classes to hide everything else
+            document.body.classList.add('printing-mode');
 
-            // Needs a timeout to let the DOM update the loading state
+            // Trigger print dialog (users can save as PDF)
             setTimeout(() => {
-                html2pdf().set(opt).from(pdfContent).save().then(() => {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                }).catch(err => {
-                    console.error('PDF generation error:', err);
-                    alert('Hubo un error al generar el PDF.');
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                });
-            }, 100);
+                window.print();
+                // Clean up after print dialog closes
+                document.body.classList.remove('printing-mode');
+                if (document.body.contains(printContainer)) {
+                    document.body.removeChild(printContainer);
+                }
+            }, 300);
         },
 
         openSettingsModal() {
