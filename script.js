@@ -489,45 +489,51 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (mode === 'register') {
                 user = document.getElementById('reg-username').value;
                 pwd = document.getElementById('reg-password').value;
+            }
+
+            if (!user.trim() || !pwd.trim()) {
+                alert('Por favor, completa todos los campos para ingresar.');
+                return;
+            }
+
+            if (mode === 'register') {
                 alert('¡Cuenta creada con éxito! Bienvenido ' + user);
             }
 
-            if (user.trim() !== '') {
-                this.isLoggedIn = true;
-                this.currentUser = user.trim().toUpperCase();
+            this.isLoggedIn = true;
+            this.currentUser = user.trim().toUpperCase();
 
-                const userNameLower = user.trim().toLowerCase();
-                if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
-                    this.role = 'ADMIN';
-                    this.currentPlanId = 2; // Auto-grant Premium plan to Admin
-                } else {
-                    this.role = 'USER';
-                }
-
-                localStorage.setItem('rcn_auth_user', this.currentUser);
-                localStorage.setItem('rcn_auth_role', this.role);
-                localStorage.setItem('rcn_auth_plan', this.currentPlanId);
-
-                this.updateUserBadge();
-
-                const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
-                if (document.getElementById('dropdown-avatar')) {
-                    document.getElementById('dropdown-avatar').src = avatarUrl;
-                }
-                if (document.getElementById('profile-avatar')) {
-                    document.getElementById('profile-avatar').src = avatarUrl + '&size=120';
-                    document.getElementById('profile-name-title').textContent = this.currentUser;
-                    document.getElementById('profile-email').textContent = `${user.trim().toLowerCase()}@correo.com`;
-                }
-
-                this.closeLoginModal();
-
-                if (this.pendingView) {
-                    this.navigateTo(this.pendingView);
-                    this.pendingView = null;
-                }
+            const userNameLower = user.trim().toLowerCase();
+            if ((userNameLower === 'juanp_nanrvaez' || userNameLower === 'juanp_narvaez') && pwd === 'Noviembre25') {
+                this.role = 'ADMIN';
+                this.currentPlanId = 2; // Auto-grant Premium plan to Admin
             } else {
-                alert("Por favor ingresa un valor válido.");
+                this.role = 'USER';
+            }
+
+            localStorage.setItem('rcn_auth_user', this.currentUser);
+            localStorage.setItem('rcn_auth_role', this.role);
+            localStorage.setItem('rcn_auth_plan', this.currentPlanId);
+
+            this.updateUserBadge();
+
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
+            if (document.getElementById('dropdown-avatar')) {
+                document.getElementById('dropdown-avatar').src = avatarUrl;
+            }
+            if (document.getElementById('profile-avatar')) {
+                document.getElementById('profile-avatar').src = avatarUrl + '&size=120';
+                document.getElementById('profile-name-title').textContent = this.currentUser;
+                document.getElementById('profile-email').textContent = `${user.trim().toLowerCase()}@correo.com`;
+            }
+
+            this.closeLoginModal();
+
+            if (this.pendingView) {
+                this.navigateTo(this.pendingView);
+                this.pendingView = null;
+            } else {
+                this.updateUserBadge();
             }
         },
 
