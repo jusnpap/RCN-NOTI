@@ -58,14 +58,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     adminToggle.onclick = () => {
                         this.toggleAdminMode();
                     };
-                    const btnProfile = document.querySelector('.btn-profile');
-                    if (btnProfile) {
-                        btnProfile.parentNode.insertBefore(adminToggle, btnProfile.nextSibling);
+                    const btnSettings = document.querySelector('.btn-profile i.fa-gear').parentNode;
+                    if (btnSettings) {
+                        btnSettings.parentNode.insertBefore(adminToggle, btnSettings.nextSibling);
+                    }
+                }
+
+                // Add Messages Inbox toggle
+                let msgToggle = document.getElementById('admin-msgs-btn');
+                if (!msgToggle) {
+                    msgToggle = document.createElement('button');
+                    msgToggle.id = 'admin-msgs-btn';
+                    msgToggle.className = 'btn-profile';
+                    msgToggle.style.color = '#10B981';
+                    msgToggle.innerHTML = '<i class="fa-solid fa-inbox"></i> BANDEJA DE MENSAJES';
+                    msgToggle.onclick = () => {
+                        this.openMessagesModal();
+                        document.getElementById('user-dropdown').classList.remove('active');
+                    };
+                    const btnSettings = document.querySelector('.btn-profile i.fa-gear').parentNode;
+                    if (btnSettings) {
+                        btnSettings.parentNode.insertBefore(msgToggle, btnSettings.nextSibling);
                     }
                 }
             } else {
                 if (adminToggle) adminToggle.remove();
                 this.adminModeActive = false;
+
+                let msgToggle = document.getElementById('admin-msgs-btn');
+                if (msgToggle) msgToggle.remove();
             }
 
             this.renderAdminControls();
@@ -354,6 +375,25 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.style.display = 'flex';
             modal.offsetHeight; // Reflow
             modal.classList.add('active');
+        },
+
+        formatCardNumber(input) {
+            let val = input.value.replace(/\D/g, ''); // remove non-digits
+            let newVal = '';
+            for (let i = 0; i < val.length; i++) {
+                if (i > 0 && i % 4 === 0) newVal += ' ';
+                newVal += val[i];
+            }
+            input.value = newVal;
+        },
+
+        formatExpiry(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length >= 2) {
+                input.value = val.substring(0, 2) + '/' + val.substring(2, 4);
+            } else {
+                input.value = val;
+            }
         },
 
         processCheckout() {
@@ -771,6 +811,20 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.opacity = '0.8';
             btn.disabled = true;
 
+            // Guardar en la base local (Bandeja de Mensajes)
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const msg = document.getElementById('message').value;
+            let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+            messages.push({
+                id: Date.now(),
+                name: name,
+                email: email,
+                message: msg,
+                date: new Date().toLocaleString()
+            });
+            localStorage.setItem('rcn_messages', JSON.stringify(messages));
+
             // Simulate API call
             setTimeout(() => {
                 // Success state
@@ -793,6 +847,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.navigateTo('grid');
                 }, 2500);
             }, 1500);
+        },
+
+        openMessagesModal() {
+            const modal = document.getElementById('messages-modal');
+            const container = document.getElementById('messages-container');
+            let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+
+            if (messages.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color: var(--text-muted); padding: 2rem;">No hay mensajes nuevos.</p>`;
+            } else {
+                container.innerHTML = messages.reverse().map(msg => `
+                    <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--text-main); font-size: 1.1rem;">${msg.name}</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">${msg.date}</span>
+                        </div>
+                        <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--primary);">${msg.email}</div>
+                        <p style="color: var(--text-muted); line-height: 1.5; font-size: 0.95rem;">${msg.message}</p>
+                    </div>
+                `).join('');
+            }
+
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
         }
     };
 
@@ -809,6 +888,13 @@ document.addEventListener('DOMContentLoaded', () => {
         app.currentUser = savedUser;
         app.role = savedRole || 'USER';
         app.currentPlanId = parseInt(savedPlan) || 0;
+
+        // El administrador siempre recibe el plan premium por defecto, 
+        // incluso si el localStorage viejo no lo tenía.
+        if (app.role === 'ADMIN') {
+            app.currentPlanId = 2;
+        }
+
         app.updateUserBadge();
     }
 
