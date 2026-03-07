@@ -1,0 +1,10 @@
+name = "noticiero-rcn1"
+compatibility_date = "2024-03-06"
+main = "src/index.js"
+
+[assets]
+directory = "./"
+
+[[kv_namespaces]]
+binding = "KV_NOTICIAS"
+id = "04ee337e160e4d08a26026d426129b45"
