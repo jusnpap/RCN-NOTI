@@ -690,12 +690,36 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.classList.add('active');
         },
 
-        saveAnnouncementEdit() {
+        async saveAnnouncementEdit() {
             const id = document.getElementById('edit-announcement-id').value;
             const title = document.getElementById('edit-announcement-title').value;
             const desc = document.getElementById('edit-announcement-desc').value;
             const badgeTxt = document.getElementById('edit-announcement-badge').value;
             const imgUrl = document.getElementById('edit-announcement-img').value;
+            const videoInput = document.getElementById('edit-announcement-video');
+
+            let videoUrl = '';
+
+            if (videoInput.files && videoInput.files[0]) {
+                const file = videoInput.files[0];
+                if (file.size > 22 * 1024 * 1024) { // 22 MB limit for Cloudflare KV 25MB max
+                    alert("El archivo de video es demasiado grande. Límite máximo: 22MB.");
+                    return;
+                }
+
+                try {
+                    videoUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(file);
+                    });
+                } catch (e) {
+                    console.error("No se pudo leer el archivo de video", e);
+                    alert("Hubo un error procesando el archivo de video.");
+                    return;
+                }
+            }
 
             const card = document.querySelector(`.video-card[data-id="${id}"]`);
             if (card) {
@@ -712,14 +736,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                if (imgUrl.trim().length > 0) {
-                    const thumbContainer = card.querySelector('.video-thumbnail');
-                    if (thumbContainer) {
+                const thumbContainer = card.querySelector('.video-thumbnail');
+                if (thumbContainer) {
+                    const oldIcon = thumbContainer.querySelector('.play-icon, .fa-newspaper, .fa-chart-line, .fa-microscope');
+                    if (oldIcon && oldIcon.classList.contains('play-icon')) {
+                        oldIcon.style.zIndex = '2';
+                    }
+
+                    if (videoUrl.trim().length > 0) {
+                        const oldImg = thumbContainer.querySelector('img');
+                        if (oldImg) oldImg.remove();
+
+                        let videoEl = thumbContainer.querySelector('video');
+                        if (!videoEl) {
+                            videoEl = document.createElement('video');
+                            videoEl.className = 'preview-video';
+                            videoEl.muted = true;
+                            videoEl.playsInline = true;
+                            videoEl.loop = true;
+                            videoEl.style.position = 'absolute';
+                            videoEl.style.width = '100%';
+                            videoEl.style.height = '100%';
+                            videoEl.style.objectFit = 'cover';
+                            videoEl.style.zIndex = '1';
+                            thumbContainer.insertBefore(videoEl, thumbContainer.firstChild);
+                        }
+
+                        while (videoEl.firstChild) {
+                            videoEl.removeChild(videoEl.firstChild);
+                        }
+
+                        const source = document.createElement('source');
+                        source.src = videoUrl;
+                        videoEl.appendChild(source);
+                        videoEl.load();
+
+                    } else if (imgUrl.trim().length > 0) {
                         const oldVideo = thumbContainer.querySelector('video');
                         const oldImg = thumbContainer.querySelector('img');
                         if (oldVideo) oldVideo.remove();
                         if (oldImg) oldImg.remove();
-                        const oldIcon = thumbContainer.querySelector('.play-icon, .fa-newspaper, .fa-chart-line, .fa-microscope');
 
                         const newImg = document.createElement('img');
                         newImg.src = imgUrl;
@@ -730,25 +786,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         newImg.style.zIndex = '1';
                         newImg.style.borderRadius = 'var(--radius-md) var(--radius-md) 0 0';
                         thumbContainer.insertBefore(newImg, thumbContainer.firstChild);
-
-                        // Push old icons behind or adjust z-index
-                        if (oldIcon && oldIcon.classList.contains('play-icon')) {
-                            oldIcon.style.zIndex = '2';
-                        }
                     }
                 }
             }
 
-            // Fallback Local Storage
             let edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
-            edited[id] = { title, desc, badgeTxt, imgUrl };
+            edited[id] = { title: title, desc: desc, badgeTxt: badgeTxt, imgUrl: imgUrl, videoUrl: videoUrl };
             localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
 
-            // Cloudflare KV Sync
             fetch('/api/announcements', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl })
+                body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl, videoUrl })
             }).catch(err => console.error('Error syncing edit to Cloudflare KV:', err));
 
             this.closeModal('edit-announcement-modal');
@@ -802,7 +851,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    if (data.imgUrl && data.imgUrl.trim().length > 0) {
+                    if (data.videoUrl && data.videoUrl.trim().length > 0) {
+                        const thumbContainer = card.querySelector('.video-thumbnail');
+                        if (thumbContainer) {
+                            const oldImg = thumbContainer.querySelector('img');
+                            if (oldImg) oldImg.remove();
+
+                            let videoEl = thumbContainer.querySelector('video');
+                            if (!videoEl) {
+                                videoEl = document.createElement('video');
+                                videoEl.className = 'preview-video';
+                                videoEl.muted = true;
+                                videoEl.playsInline = true;
+                                videoEl.loop = true;
+                                videoEl.style.position = 'absolute';
+                                videoEl.style.width = '100%';
+                                videoEl.style.height = '100%';
+                                videoEl.style.objectFit = 'cover';
+                                videoEl.style.zIndex = '1';
+                                thumbContainer.insertBefore(videoEl, thumbContainer.firstChild);
+                            }
+
+                            while (videoEl.firstChild) {
+                                videoEl.removeChild(videoEl.firstChild);
+                            }
+
+                            const source = document.createElement('source');
+                            source.src = data.videoUrl;
+                            videoEl.appendChild(source);
+                            videoEl.load();
+                        }
+                    } else if (data.imgUrl && data.imgUrl.trim().length > 0) {
                         const thumbContainer = card.querySelector('.video-thumbnail');
                         if (thumbContainer) {
                             const oldVideo = thumbContainer.querySelector('video');
