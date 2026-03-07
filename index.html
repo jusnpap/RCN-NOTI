@@ -952,14 +952,16 @@
                             oninput="app.formatCardNumber(this)">
                     </div>
                     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div class="input-group" style="flex: 1;">
+                        <div class="input-group" style="flex: 1; min-width: 0;">
                             <label for="checkout-exp">Vencimiento</label>
                             <input type="text" id="checkout-exp" required placeholder="MM/AA" maxlength="5"
+                                style="width: 100%; min-width: 0; box-sizing: border-box;"
                                 oninput="app.formatExpiry(this)">
                         </div>
-                        <div class="input-group" style="flex: 1;">
+                        <div class="input-group" style="flex: 1; min-width: 0;">
                             <label for="checkout-cvv">CVV</label>
                             <input type="text" id="checkout-cvv" required placeholder="123" maxlength="4"
+                                style="width: 100%; min-width: 0; box-sizing: border-box;"
                                 oninput="app.formatCVV(this)">
                         </div>
                     </div>
