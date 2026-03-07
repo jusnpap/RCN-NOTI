@@ -1,0 +1,56 @@
+export default {
+    async fetch(request, env, ctx) {
+        const url = new URL(request.url);
+
+        // API Routes for Database
+        if (url.pathname === '/api/announcements') {
+            if (request.method === 'GET') {
+                try {
+                    const deleted = await env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
+                    const edited = await env.KV_NOTICIAS.get('edited_announcements', { type: 'json' }) || {};
+                    return new Response(JSON.stringify({ deleted, edited }), {
+                        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    });
+                } catch (error) {
+                    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+                }
+            }
+
+            if (request.method === 'POST') {
+                try {
+                    const data = await request.json();
+                    if (data.action === 'edit') {
+                        let edited = await env.KV_NOTICIAS.get('edited_announcements', { type: 'json' }) || {};
+                        edited[data.id] = {
+                            title: data.title,
+                            desc: data.desc,
+                            badgeTxt: data.badgeTxt,
+                            imgUrl: data.imgUrl
+                        };
+                        await env.KV_NOTICIAS.put('edited_announcements', JSON.stringify(edited));
+                        return new Response(JSON.stringify({ success: true, message: 'Anuncio editado' }), { status: 200 });
+                    }
+
+                    if (data.action === 'delete') {
+                        let deleted = await env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
+                        if (!deleted.includes(data.id)) {
+                            deleted.push(data.id);
+                            await env.KV_NOTICIAS.put('deleted_announcements', JSON.stringify(deleted));
+                        }
+                        return new Response(JSON.stringify({ success: true, message: 'Anuncio eliminado' }), { status: 200 });
+                    }
+                    return new Response(JSON.stringify({ error: 'Action not supported' }), { status: 400 });
+                } catch (error) {
+                    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+                }
+            }
+        }
+
+        // Serve Static Assets (HTML, CSS, JS) from KV or direct Worker response
+        // For simplicity since it's just 3 files, we'll map them from the local env during build or rely on Cloudflare Pages.
+        // However, if the user deployed this as a standard Worker (`npx wrangler deploy`), 
+        // the static assets won't be served automatically without an assets setup.
+        // Returning 404 for unknown routes to not break standard behavior if used via standard Pages routing.
+        return env.ASSETS.fetch(request);
+    }
+};
