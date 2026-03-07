@@ -2,8 +2,9 @@ export async function onRequestGet(context) {
     try {
         const deleted = await context.env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
         const edited = await context.env.KV_NOTICIAS.get('edited_announcements', { type: 'json' }) || {};
+        const editedFull = await context.env.KV_NOTICIAS.get('edited_full_articles', { type: 'json' }) || {};
 
-        return new Response(JSON.stringify({ deleted, edited }), {
+        return new Response(JSON.stringify({ deleted, edited, editedFull }), {
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
@@ -30,6 +31,16 @@ export async function onRequestPost(context) {
             };
             await context.env.KV_NOTICIAS.put('edited_announcements', JSON.stringify(edited));
             return new Response(JSON.stringify({ success: true, message: 'Anuncio editado' }), { status: 200 });
+        }
+
+        if (data.action === 'edit_full') {
+            let editedFull = await context.env.KV_NOTICIAS.get('edited_full_articles', { type: 'json' }) || {};
+            editedFull[data.id] = {
+                title: data.title,
+                content: data.content
+            };
+            await context.env.KV_NOTICIAS.put('edited_full_articles', JSON.stringify(editedFull));
+            return new Response(JSON.stringify({ success: true, message: 'Artículo completo editado' }), { status: 200 });
         }
 
         if (data.action === 'delete') {

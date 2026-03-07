@@ -768,6 +768,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.edited && Object.keys(data.edited).length > 0) {
                         localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
                     }
+                    if (data.editedFull && Object.keys(data.editedFull).length > 0) {
+                        localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                    }
                 }
             } catch (error) {
                 console.warn('Could not fetch from Cloudflare KV, falling back to local storage', error);
@@ -848,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        submitForm() {
+        async submitForm() {
             const btn = document.getElementById('btn-submit-contact');
             const originalText = btn.innerText;
 
@@ -857,48 +860,81 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.opacity = '0.8';
             btn.disabled = true;
 
-            // Guardar en la base local (Bandeja de Mensajes)
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const msg = document.getElementById('message').value;
-            let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
-            messages.push({
-                id: Date.now(),
-                name: name,
-                email: email,
-                message: msg,
-                date: new Date().toLocaleString()
-            });
-            localStorage.setItem('rcn_messages', JSON.stringify(messages));
 
-            // Simulate API call
-            setTimeout(() => {
-                // Success state
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡MENSAJE ENVIADO!';
-                btn.style.background = '#10B981';
-                btn.style.borderColor = '#10B981';
-                btn.style.color = '#FFFFFF';
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'send', name, email, message: msg })
+                });
 
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡MENSAJE ENVIADO!';
+                    btn.style.background = '#10B981';
+                    btn.style.borderColor = '#10B981';
+                    btn.style.color = '#FFFFFF';
+
+                    setTimeout(() => {
+                        document.getElementById('contact-form').reset();
+                        btn.innerText = originalText;
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.style.opacity = '';
+                        btn.disabled = false;
+                        app.navigateTo('grid');
+                    }, 2500);
+                } else {
+                    throw new Error('Fallback');
+                }
+            } catch (err) {
+                // Fallback to local storage
+                let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+                messages.push({
+                    id: Date.now(),
+                    name: name,
+                    email: email,
+                    message: msg,
+                    date: new Date().toLocaleString()
+                });
+                localStorage.setItem('rcn_messages', JSON.stringify(messages));
+
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡ENVIADO (MODO LOCAL)!';
                 setTimeout(() => {
-                    // Reset form and UI
                     document.getElementById('contact-form').reset();
                     btn.innerText = originalText;
-                    btn.style.background = '';
-                    btn.style.borderColor = '';
-                    btn.style.color = '';
-                    btn.style.opacity = '';
                     btn.disabled = false;
-
-                    // Go back to Home/Grid
-                    this.navigateTo('grid');
+                    app.navigateTo('grid');
                 }, 2500);
-            }, 1500);
+            }
         },
 
-        openMessagesModal() {
+        async openMessagesModal() {
             const modal = document.getElementById('messages-modal');
             const container = document.getElementById('messages-container');
+
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+
+            container.innerHTML = '<div style="text-align:center; padding: 2rem;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
+
             let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+
+            try {
+                const response = await fetch('/api/messages');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.messages && data.messages.length > 0) {
+                        messages = data.messages;
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not fetch global messages. Falling back to local storage.');
+            }
 
             if (messages.length === 0) {
                 container.innerHTML = `<p style="text-align:center; color: var(--text-muted); padding: 2rem;">No hay mensajes nuevos.</p>`;
@@ -914,10 +950,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `).join('');
             }
-
-            modal.style.display = 'flex';
-            modal.offsetHeight;
-            modal.classList.add('active');
         }
     };
 
