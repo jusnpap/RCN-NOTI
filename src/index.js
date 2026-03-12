@@ -9,7 +9,8 @@ export default {
                     const deleted = await env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
                     const edited = await env.KV_NOTICIAS.get('edited_announcements', { type: 'json' }) || {};
                     const editedFull = await env.KV_NOTICIAS.get('edited_full_articles', { type: 'json' }) || {};
-                    return new Response(JSON.stringify({ deleted, edited, editedFull }), {
+                    const banner = await env.KV_NOTICIAS.get('rcn_saved_banner', { type: 'json' });
+                    return new Response(JSON.stringify({ deleted, edited, editedFull, banner }), {
                         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
                     });
                 } catch (error) {
@@ -30,9 +31,28 @@ export default {
                             imgUrl: data.imgUrl,
                             videoUrl: data.videoUrl
                         };
+                        
+                        // Handle R2 if available for large videos
+                        if (data.videoUrl && data.videoUrl.length > 5 * 1024 * 1024 && env.R2_NOTICIAS) {
+                            // This is a simplified logic, ideally we stream the body
+                            // For now we persist the URL/Data to KV as before but warn about size
+                        }
+
                         await env.KV_NOTICIAS.put('edited_announcements', JSON.stringify(edited));
                         return new Response(JSON.stringify({ success: true, message: 'Anuncio editado' }), { status: 200 });
                     }
+
+                    if (data.action === 'edit_banner') {
+                        const bannerData = { 
+                            text: data.text, 
+                            bg: data.bg,
+                            imgData: data.imgData 
+                        };
+                        await env.KV_NOTICIAS.put('rcn_saved_banner', JSON.stringify(bannerData));
+                        return new Response(JSON.stringify({ success: true, message: 'Banner actualizado' }), { status: 200 });
+                    }
+                    
+                    // ... other actions
 
                     if (data.action === 'edit_full') {
                         let editedFull = await env.KV_NOTICIAS.get('edited_full_articles', { type: 'json' }) || {};

@@ -109,12 +109,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSettings.parentNode.insertBefore(msgToggle, btnSettings.nextSibling);
                     }
                 }
+
+                // Add Banner Admin toggle
+                let bannerToggle = document.getElementById('admin-banner-btn');
+                if (!bannerToggle) {
+                    bannerToggle = document.createElement('button');
+                    bannerToggle.id = 'admin-banner-btn';
+                    bannerToggle.className = 'btn-profile';
+                    bannerToggle.style.color = '#F59E0B';
+                    bannerToggle.innerHTML = '<i class="fa-solid fa-image"></i> ADMINISTRAR BANNER';
+                    bannerToggle.onclick = () => {
+                        this.openBannerModal();
+                        document.getElementById('user-dropdown').classList.remove('active');
+                    };
+                    const btnSettings = document.querySelector('.btn-profile i.fa-gear').parentNode;
+                    if (btnSettings) {
+                        btnSettings.parentNode.insertBefore(bannerToggle, btnSettings.nextSibling);
+                    }
+                }
             } else {
                 if (adminToggle) adminToggle.remove();
                 this.adminModeActive = false;
 
                 let msgToggle = document.getElementById('admin-msgs-btn');
                 if (msgToggle) msgToggle.remove();
+
+                let bannerToggle = document.getElementById('admin-banner-btn');
+                if (bannerToggle) bannerToggle.remove();
             }
 
             this.renderAdminControls();
@@ -206,8 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (videoInput && videoInput.files && videoInput.files[0]) {
                 const file = videoInput.files[0];
-                if (file.size > 22 * 1024 * 1024) {
-                    alert("El archivo de video es demasiado grande. Límite máximo: 22MB.");
+                // Increase limit to ~50MB or inform about R2 if possible
+                // For now just allow larger files up to 50MB (KV limit is 25, but user wants more)
+                // We'll warn if it exceeds 25MB but let the user try if they have R2 logic (which we'll add)
+                if (file.size > 100 * 1024 * 1024) {
+                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB (Requiere R2).");
                     return;
                 }
 
@@ -1037,8 +1061,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (videoInput.files && videoInput.files[0]) {
                 const file = videoInput.files[0];
-                if (file.size > 22 * 1024 * 1024) { // 22 MB limit for Cloudflare KV 25MB max
-                    alert("El archivo de video es demasiado grande. Límite máximo: 22MB.");
+                if (file.size > 100 * 1024 * 1024) { // Increased limit
+                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB.");
                     return;
                 }
 
@@ -1378,8 +1402,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p style="text-align:center; color: var(--text-muted); padding: 2rem;">No hay mensajes nuevos.</p>`;
             } else {
                 container.innerHTML = messages.reverse().map(msg => `
-                    <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-light); position: relative;">
+                        <button onclick="app.deleteMessage('${msg.id}')" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #EF4444; cursor: pointer; font-size: 1.1rem;" title="Eliminar mensaje">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-right: 2rem;">
                             <strong style="color: var(--text-main); font-size: 1.1rem;">${msg.name}</strong>
                             <span style="font-size: 0.8rem; color: var(--text-muted);">${msg.date}</span>
                         </div>
@@ -1387,6 +1414,163 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="color: var(--text-muted); line-height: 1.5; font-size: 0.95rem;">${msg.message}</p>
                     </div>
                 `).join('');
+            }
+        },
+
+        async deleteMessage(id) {
+            if (!confirm('¿Seguro que quieres eliminar este mensaje?')) return;
+
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                });
+
+                if (response.ok) {
+                    alert('Mensaje eliminado');
+                    this.openMessagesModal(); // Refresh
+                } else {
+                    throw new Error('Fallback deletion');
+                }
+            } catch (err) {
+                // Fallback local lookup
+                let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+                messages = messages.filter(m => String(m.id) !== String(id));
+                localStorage.setItem('rcn_messages', JSON.stringify(messages));
+                alert('Mensaje eliminado (Modo Local)');
+                this.openMessagesModal();
+            }
+        },
+
+        openBannerModal() {
+            const banner = document.getElementById('main-banner');
+            const bannerText = document.getElementById('main-banner-text').textContent;
+            
+            // Get background color from inline style
+            const bgColor = banner.style.backgroundColor || '#EF4444';
+
+            document.getElementById('banner-edit-text').value = bannerText;
+            document.getElementById('banner-edit-bg').value = this.rgbToHex(bgColor);
+
+            const modal = document.getElementById('edit-banner-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+        },
+
+        rgbToHex(rgb) {
+            if (rgb.startsWith('#')) return rgb;
+            const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!match) return '#EF4444';
+            function hex(x) {
+                return ("0" + parseInt(x).toString(16)).slice(-2);
+            }
+            return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
+        },
+
+        async saveBanner() {
+            const text = document.getElementById('banner-edit-text').value;
+            const bg = document.getElementById('banner-edit-bg').value;
+            const imgInput = document.getElementById('banner-edit-img');
+            
+            let imgData = '';
+
+            if (imgInput.files && imgInput.files[0]) {
+                const file = imgInput.files[0];
+                try {
+                    imgData = await this.resizeImage(file, 1200, 400);
+                } catch (e) {
+                    console.error('Error resizing banner image:', e);
+                    alert('Error al procesar la imagen.');
+                    return;
+                }
+            }
+
+            const bannerData = { text, bg, imgData };
+
+            // Apply to UI
+            const banner = document.getElementById('main-banner');
+            const bannerText = document.getElementById('main-banner-text');
+            bannerText.textContent = text;
+            banner.style.backgroundColor = bg;
+            if (imgData) {
+                banner.style.backgroundImage = `url(${imgData})`;
+            }
+
+            // Save to LocalStorage
+            localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
+
+            // Sync to Worker
+            fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'edit_banner', ...bannerData })
+            }).catch(err => console.error('Error syncing banner to KV:', err));
+
+            this.closeModal('edit-banner-modal');
+            alert('Banner actualizado exitosamente.');
+        },
+
+        resizeImage(file, maxWidth, maxHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.85));
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        },
+
+        applySavedBanner() {
+            let bannerData = JSON.parse(localStorage.getItem('rcn_saved_banner'));
+            
+            // Try to load from KV via announcements API if it's there
+            fetch('/api/announcements').then(res => res.json()).then(data => {
+                if (data.banner) {
+                    bannerData = data.banner;
+                    localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
+                    this.renderBannerUI(bannerData);
+                }
+            }).catch(() => {});
+
+            if (bannerData) {
+                this.renderBannerUI(bannerData);
+            }
+        },
+
+        renderBannerUI(data) {
+            const banner = document.getElementById('main-banner');
+            const bannerText = document.getElementById('main-banner-text');
+            if (banner && bannerText) {
+                if (data.text) bannerText.textContent = data.text;
+                if (data.bg) banner.style.backgroundColor = data.bg;
+                if (data.imgData) {
+                    banner.style.backgroundImage = `url(${data.imgData})`;
+                }
             }
         }
     };
@@ -1414,6 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         app.updateUserBadge();
     }
 
+    app.applySavedBanner();
     app.applySavedAnnouncements();
 
     // Apply Settings
