@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
         speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
     });
 
+    // Close user dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('user-dropdown');
+        if (dropdown && dropdown.classList.contains('active')) {
+            if (!e.target.closest('.user-menu-container')) {
+                dropdown.classList.remove('active');
+            }
+        }
+    });
+
     const app = {
         currentView: 'grid',
         isLoggedIn: false,
@@ -40,6 +50,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('display-username').innerHTML = `<i class="fa-regular fa-user" style="margin-right: 5px;"></i> ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
+
+            // Actualizar credencial de perfil
+            const profileBadge = document.getElementById('profile-badge');
+            if (profileBadge) {
+                if (this.currentPlanId === 2) {
+                    profileBadge.textContent = 'Plan Premium RCN';
+                    profileBadge.style.background = '#F59E0B';
+                    profileBadge.style.color = '#fff';
+                } else if (this.currentPlanId === 1) {
+                    profileBadge.textContent = 'Plan Estándar';
+                    profileBadge.style.background = 'var(--primary)';
+                    profileBadge.style.color = '#fff';
+                } else {
+                    profileBadge.textContent = 'Plan Básico';
+                    profileBadge.style.background = 'var(--bg-secondary)';
+                    profileBadge.style.color = 'var(--text-main)';
+                }
+            }
 
             let adminToggle = document.getElementById('admin-toggle-btn');
             const loginBtn = document.getElementById('nav-login-btn');
@@ -91,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.renderAdminControls();
             this.renderFullEditButtons();
+            this.renderDownloadButtons();
         },
 
         renderFullEditButtons() {
@@ -109,6 +138,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     const titleBar = container.querySelector('.video-title-bar');
                     if (titleBar) {
                         titleBar.parentNode.insertBefore(editBtn, titleBar.nextSibling);
+                    }
+                });
+            }
+        },
+
+        renderDownloadButtons() {
+            document.querySelectorAll('.btn-download-pdf-dynamic').forEach(btn => btn.remove());
+
+            if (this.currentPlanId === 2 || this.role === 'ADMIN') {
+                document.querySelectorAll('.video-detail-container').forEach(container => {
+                    // Evitar duplicar en los que ya tienen el boton estaticamente (Premium)
+                    const hasStaticBtn = !!Array.from(container.querySelectorAll('button')).find(btn => btn.textContent.includes('Descargar PDF'));
+
+                    if (!hasStaticBtn) {
+                        const downloadContainer = document.createElement('div');
+                        downloadContainer.className = 'btn-download-pdf-dynamic';
+                        downloadContainer.style.textAlign = 'center';
+                        downloadContainer.style.marginTop = '2rem';
+                        downloadContainer.style.marginBottom = '1.5rem';
+
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-primary';
+                        btn.style.background = 'var(--accent-blue)';
+                        btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Descargar PDF del Artículo';
+                        btn.onclick = () => app.downloadPDF(container);
+
+                        downloadContainer.appendChild(btn);
+
+                        // Insertar antes del botón de Volver
+                        const volverBtn = Array.from(container.querySelectorAll('button')).find(b => b.textContent.includes('Volver'));
+                        if (volverBtn) {
+                            volverBtn.parentNode.insertBefore(downloadContainer, volverBtn);
+                        } else {
+                            container.appendChild(downloadContainer);
+                        }
                     }
                 });
             }
@@ -207,6 +271,218 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Artículo modificado exitosamente.");
         },
 
+        importTextFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const textArea = document.getElementById('full-edit-content');
+
+            const formatTextToHTML = (rawText) => {
+                // Remove existing html if any (unlikely from raw text, but good practice)
+                let text = rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                // Split by double newlines to find potential paragraphs
+                const paragraphs = text.split(/\n\s*\n/);
+
+                const formatted = paragraphs.map(p => {
+                    const trimmed = p.trim();
+                    if (!trimmed) return '';
+                    // If it's a short line, it might be a title/subtitle
+                    if (trimmed.length < 80 && !trimmed.endsWith('.')) {
+                        return `<h3><strong>${trimmed}</strong></h3>`;
+                    }
+                    return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+                }).filter(p => p !== '');
+
+                return formatted.join('\n\n');
+            };
+
+            if (ext === 'pdf') {
+                if (typeof pdfjsLib === 'undefined') {
+                    alert('La librería PDF no ha cargado correctamente.');
+                    return;
+                }
+                const fileReader = new FileReader();
+                fileReader.onload = async function () {
+                    const typedarray = new Uint8Array(this.result);
+                    try {
+                        const loadingTask = pdfjsLib.getDocument(typedarray);
+                        const pdf = await loadingTask.promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            // PDF.js lines are individual items. We try to guess line breaks if items have large Y gaps
+                            let lastY = -1;
+                            let pageText = '';
+                            for (const item of textContent.items) {
+                                if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 12) {
+                                    pageText += '\n'; // Add newline for significant vertical jump
+                                }
+                                pageText += item.str;
+                                lastY = item.transform[5];
+                            }
+                            fullText += pageText + '\n\n';
+                        }
+
+                        const htmlVersion = formatTextToHTML(fullText);
+
+                        if (textArea.value.trim() !== '') {
+                            textArea.value += '\n\n' + htmlVersion;
+                        } else {
+                            textArea.value = htmlVersion;
+                        }
+                        alert('Texto de PDF formateado y extraído exitosamente.');
+                    } catch (err) {
+                        console.error(err);
+                        alert('No se pudo extraer el texto del PDF.');
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else if (ext === 'doc' || ext === 'docx') {
+                if (typeof mammoth === 'undefined') {
+                    alert('La librería de Word no ha cargado correctamente.');
+                    return;
+                }
+                const fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    const arrayBuffer = e.target.result;
+                    // mammoth can extract HTML directly which is better
+                    mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                        .then(function (result) {
+                            const html = result.value; // The generated HTML
+                            if (textArea.value.trim() !== '') {
+                                textArea.value += '\n\n' + html.trim();
+                            } else {
+                                textArea.value = html.trim();
+                            }
+                            alert('Texto de Word formateado extraído exitosamente.');
+                        })
+                        .catch(function (err) {
+                            console.error(err);
+                            alert('No se pudo extraer el texto del documento Word.');
+                        });
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else {
+                alert('Formato no soportado. Sube un PDF o Word (.docx).');
+            }
+        },
+
+        downloadPDF(container) {
+            const titleEl = container.querySelector('.video-brand');
+            const descEl = container.querySelector('.video-description');
+
+            if (!titleEl || !descEl || !window.jspdf) {
+                alert('No se pudo encontrar el contenido para descargar o la librería PDF no cargó.');
+                return;
+            }
+
+            const eventObj = window.event;
+            const btn = (eventObj && eventObj.currentTarget) || (container.querySelector('.fa-file-pdf') ? container.querySelector('.fa-file-pdf').closest('button') : null);
+            let originalHTML = '';
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+                btn.disabled = true;
+            }
+
+            // small timeout to allow UI update
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const margin = 20;
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const maxLineWidth = pageWidth - margin * 2;
+                    let cursorY = 20;
+
+                    // Brand Watermark
+                    doc.setTextColor(245, 220, 220); // Very light red
+                    doc.setFontSize(50);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
+
+                    // Title
+                    doc.setTextColor(230, 57, 70); // Red
+                    doc.setFontSize(22);
+                    doc.setFont('helvetica', 'bold');
+                    const title = titleEl.textContent.trim();
+                    const titleLines = doc.splitTextToSize(title, maxLineWidth);
+                    doc.text(titleLines, margin, cursorY);
+                    cursorY += (titleLines.length * 10);
+
+                    // Separator Line
+                    doc.setDrawColor(230, 57, 70);
+                    doc.setLineWidth(0.5);
+                    doc.line(margin, cursorY - 4, pageWidth - margin, cursorY - 4);
+                    cursorY += 10;
+
+                    // Text Content
+                    doc.setTextColor(30, 41, 59); // Dark grey
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'normal');
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = descEl.innerHTML.replace(/<\/p>/gi, '\n\n').replace(/<br\s*[\/]?>/gi, '\n');
+                    const cleanText = tempDiv.textContent || tempDiv.innerText || "";
+
+                    const contentLines = doc.splitTextToSize(cleanText.trim(), maxLineWidth);
+
+                    contentLines.forEach(line => {
+                        if (cursorY > pageHeight - 30) {
+                            doc.addPage();
+                            cursorY = 20;
+                            // Re-draw watermark on new page
+                            doc.setTextColor(245, 220, 220);
+                            doc.setFontSize(50);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
+                            doc.setTextColor(30, 41, 59);
+                            doc.setFontSize(12);
+                            doc.setFont('helvetica', 'normal');
+                        }
+                        doc.text(line, margin, cursorY);
+                        cursorY += 7;
+                    });
+
+                    // Footer
+                    cursorY += 15;
+                    if (cursorY > pageHeight - 20) {
+                        doc.addPage();
+                        cursorY = 20;
+                    }
+                    doc.setDrawColor(203, 213, 225);
+                    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+                    cursorY += 8;
+
+                    doc.setTextColor(100, 116, 139);
+                    doc.setFontSize(9);
+                    doc.text(`Descargado desde RCN Noticias. Usuario: ${this.currentUser || 'Invitado'}.`, pageWidth / 2, cursorY, { align: 'center' });
+                    doc.text('Todos los derechos reservados.', pageWidth / 2, cursorY + 5, { align: 'center' });
+
+                    const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                    doc.save(filename);
+
+                } catch (err) {
+                    console.error('PDF generation error:', err);
+                    alert('Hubo un error al generar el PDF de forma directa.');
+                } finally {
+                    if (btn) {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                }
+            }, 100);
+        },
+
         openSettingsModal() {
             const modal = document.getElementById('settings-modal');
             modal.style.display = 'flex';
@@ -255,6 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         requireAuthAndNavigate(viewId) {
             if (this.isLoggedIn) {
+                // Instead of just this.navigateTo, let's update the hash so it's consistent
+                window.location.hash = viewId;
                 this.navigateTo(viewId);
             } else {
                 this.pendingView = viewId;
@@ -278,6 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (this.currentView === viewId || this.isAnimating) return;
 
+            window.location.hash = viewId;
             this.isAnimating = true;
             const currentEl = document.getElementById(`view-${this.currentView}`);
 
@@ -690,6 +969,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+
+            // Special handling for Test Banner Edit Button
+            const banner = document.getElementById('banner-test-container');
+            if (banner) {
+                const existingBtn = banner.querySelector('.admin-banner-edit');
+                if (existingBtn) existingBtn.remove();
+
+                if (this.role === 'ADMIN' && this.adminModeActive) {
+                    const btn = document.createElement('button');
+                    btn.className = 'admin-banner-edit';
+                    btn.innerHTML = '<i class="fa-solid fa-pen"></i> EDITAR ESTE BANNER';
+                    btn.style.position = 'absolute';
+                    btn.style.bottom = '10px';
+                    btn.style.right = '10px';
+                    btn.style.background = 'white';
+                    btn.style.color = 'var(--primary)';
+                    btn.style.padding = '5px 15px';
+                    btn.style.borderRadius = '20px';
+                    btn.style.fontSize = '0.8rem';
+                    btn.style.fontWeight = 'bold';
+                    btn.style.border = 'none';
+                    btn.style.cursor = 'pointer';
+                    btn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.openEditBannerModal();
+                    };
+                    banner.appendChild(btn);
+                }
+            }
         },
 
         deleteAnnouncement(id) {
@@ -1109,6 +1418,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `).join('');
             }
+        },
+
+        openEditBannerModal() {
+            const textEl = document.getElementById('banner-test-text');
+            const containerEl = document.getElementById('banner-test-container');
+            
+            document.getElementById('banner-edit-text').value = textEl ? textEl.textContent.trim() : '';
+            document.getElementById('banner-edit-bg').value = containerEl ? containerEl.style.background : '';
+
+            const modal = document.getElementById('edit-banner-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+        },
+
+        saveBannerEdit() {
+            const newText = document.getElementById('banner-edit-text').value;
+            const newBg = document.getElementById('banner-edit-bg').value;
+
+            const textEl = document.getElementById('banner-test-text');
+            const containerEl = document.getElementById('banner-test-container');
+
+            if (textEl) textEl.textContent = newText;
+            if (containerEl) {
+                containerEl.style.background = newBg;
+                // Force important if it's a gradient
+                if (newBg.includes('gradient')) {
+                    containerEl.style.setProperty('background', newBg, 'important');
+                }
+            }
+
+            localStorage.setItem('rcn_saved_banner', JSON.stringify({ text: newText, bg: newBg }));
+
+            // Attempt KV sync
+            fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'edit_banner', text: newText, bg: newBg })
+            }).catch(err => console.error('Error syncing banner to Cloudflare KV:', err));
+
+            this.closeModal('edit-banner-modal');
+            alert("Banner actualizado correctamente.");
         }
     };
 
@@ -1136,6 +1487,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     app.applySavedAnnouncements();
+
+    // New: Apply saved banner
+    const savedBanner = JSON.parse(localStorage.getItem('rcn_saved_banner') || '{}');
+    if (savedBanner.text) {
+        const textEl = document.getElementById('banner-test-text');
+        if (textEl) textEl.textContent = savedBanner.text;
+    }
+    if (savedBanner.bg) {
+        const containerEl = document.getElementById('banner-test-container');
+        if (containerEl) containerEl.style.background = savedBanner.bg;
+    }
 
     // Apply Settings
     const savedTheme = localStorage.getItem('rcn_theme');
@@ -1187,4 +1549,23 @@ document.addEventListener('DOMContentLoaded', () => {
     videos.forEach(video => {
         video.style.opacity = '1'; // keep visible by default
     });
+
+    // Hash routing initialization
+    const handleHash = () => {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            if (hash.startsWith('video-') || hash.startsWith('premium-')) {
+                app.requireAuthAndNavigate(hash);
+            } else {
+                app.navigateTo(hash);
+            }
+        } else {
+            // Default view
+            if (app.currentView !== 'grid') app.navigateTo('grid');
+        }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    // Call on first load after a slight delay to ensure UI is ready
+    setTimeout(handleHash, 50);
 });

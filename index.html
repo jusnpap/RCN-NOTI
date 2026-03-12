@@ -72,16 +72,19 @@
                 <h1 id="anuncios-title" class="page-title">RCN-NOTICIAS</h1>
             </div>
 
-            <div class="banner-container">
-                <div class="banner" style="border: none; background: transparent;">
-                    <img src="assets/anuncio_prueba.png" alt="Anuncio publicitario"
-                        style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md);">
-                </div>
+            <!-- Anuncio Prueba (Banner) -->
+            <div class="anuncio-prueba-banner" id="banner-test-container"
+                onclick="if(app.role === 'ADMIN' && app.adminModeActive) app.openEditBannerModal()"
+                style="background-color: #EF4444; color: white; text-align: center; padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; box-shadow: var(--shadow-md); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;">
+                <h2 id="banner-test-text"
+                    style="font-size: 4.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+                    Anuncio Prueba</h2>
             </div>
 
             <div class="grid-container">
                 <!-- Video 1 -->
-                <article class="video-card" data-id="video-1" onclick="app.requireAuthAndNavigate('video-1')"
+                <a href="#video-1" class="video-card" data-id="video-1"
+                    onclick="app.requireAuthAndNavigate('video-1'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -98,9 +101,10 @@
                             perdidos durante la tormenta del fin de semana...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
                 <!-- Video 2 -->
-                <article class="video-card" data-id="video-2" onclick="app.requireAuthAndNavigate('video-2')"
+                <a href="#video-2" class="video-card" data-id="video-2"
+                    onclick="app.requireAuthAndNavigate('video-2'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -117,9 +121,10 @@
                             lagos artificiales y senderos interactivos...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
                 <!-- Video 3 -->
-                <article class="video-card" data-id="video-3" onclick="app.requireAuthAndNavigate('video-3')"
+                <a href="#video-3" class="video-card" data-id="video-3"
+                    onclick="app.requireAuthAndNavigate('video-3'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -136,7 +141,7 @@
                             los tiempos de viaje a Marte a la mitad...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
             </div>
 
             <h2
@@ -144,7 +149,8 @@
                 Más Noticias</h2>
             <div class="grid-container small-grid">
                 <!-- Video 4 -->
-                <article class="video-card" data-id="video-4" onclick="app.requireAuthAndNavigate('video-4')"
+                <a href="#video-4" class="video-card" data-id="video-4"
+                    onclick="app.requireAuthAndNavigate('video-4'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -162,9 +168,10 @@
                             arrecifes coralinos clave en la región oceánica del sur.</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
                 <!-- Video 5 -->
-                <article class="video-card" data-id="video-5" onclick="app.requireAuthAndNavigate('video-5')"
+                <a href="#video-5" class="video-card" data-id="video-5"
+                    onclick="app.requireAuthAndNavigate('video-5'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -182,9 +189,10 @@
                             continental tras 15 años de sequía.</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
                 <!-- Video 6 -->
-                <article class="video-card" data-id="video-6" onclick="app.requireAuthAndNavigate('video-6')"
+                <a href="#video-6" class="video-card" data-id="video-6"
+                    onclick="app.requireAuthAndNavigate('video-6'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -201,9 +209,10 @@
                             significativamente el estrés oxidativo.</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
                 <!-- Video 7 -->
-                <article class="video-card" data-id="video-7" onclick="app.requireAuthAndNavigate('video-7')"
+                <a href="#video-7" class="video-card" data-id="video-7"
+                    onclick="app.requireAuthAndNavigate('video-7'); event.preventDefault();"
                     onmouseenter="app.startPreview(this)" onmouseleave="app.stopPreview(this)" role="button"
                     tabindex="0">
                     <div class="video-thumbnail">
@@ -220,7 +229,7 @@
                             de la década tras recientes anuncios.</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
-                </article>
+                </a>
             </div>
 
             <div id="premium-articles-section"
@@ -231,7 +240,8 @@
                 </h2>
                 <div class="grid-container premium-grid">
                     <!-- Articulo Premium 1 -->
-                    <article class="video-card premium-card" data-id="premium-1" onclick="app.navigateTo('premium-1')"
+                    <a href="#premium-1" class="video-card premium-card" data-id="premium-1"
+                        onclick="app.navigateTo('premium-1'); event.preventDefault();"
                         style="border-top: 4px solid #F59E0B;">
                         <div class="video-thumbnail"
                             style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
@@ -252,9 +262,10 @@
                             <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
                                     class="fa-solid fa-arrow-right"></i></div>
                         </div>
-                    </article>
+                    </a>
                     <!-- Articulo Premium 2 -->
-                    <article class="video-card premium-card" data-id="premium-2" onclick="app.navigateTo('premium-2')"
+                    <a href="#premium-2" class="video-card premium-card" data-id="premium-2"
+                        onclick="app.navigateTo('premium-2'); event.preventDefault();"
                         style="border-top: 4px solid #F59E0B;">
                         <div class="video-thumbnail"
                             style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
@@ -275,9 +286,10 @@
                             <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
                                     class="fa-solid fa-arrow-right"></i></div>
                         </div>
-                    </article>
+                    </a>
                     <!-- Articulo Premium 3 -->
-                    <article class="video-card premium-card" data-id="premium-3" onclick="app.navigateTo('premium-3')"
+                    <a href="#premium-3" class="video-card premium-card" data-id="premium-3"
+                        onclick="app.navigateTo('premium-3'); event.preventDefault();"
                         style="border-top: 4px solid #F59E0B;">
                         <div class="video-thumbnail"
                             style="background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
@@ -297,7 +309,7 @@
                             <div class="read-more" style="color: #F59E0B;">Leer artículo a fondo <i
                                     class="fa-solid fa-arrow-right"></i></div>
                         </div>
-                    </article>
+                    </a>
                 </div>
             </div>
 
@@ -589,6 +601,45 @@
             </div>
         </section>
 
+        <!-- View Video 8 (Prueba) -->
+        <section id="view-video-8" class="view" aria-labelledby="video-title-8">
+            <div class="video-detail-container">
+                <div class="video-header">
+                    <span class="badge-red">INFORMACIÓN</span>
+                </div>
+                <div class="video-title-bar">
+                    <h2 id="video-title-8" class="video-brand">Anuncio de prueba</h2>
+                    <div class="social-icons dark">
+                        <a href="https://www.facebook.com" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.tiktok.com" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="main-video-player" style="background: none; box-shadow: none;">
+                    <video class="plyr-video" playsinline controls data-poster="" style="width: 100%;">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="1080">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="720">
+                        <source src="assets/video_prueba_7.mp4" type="video/mp4" size="480">
+                        Tu navegador no soporta reproducción de video.
+                    </video>
+                </div>
+
+                <div class="video-description scrollable-content">
+                    <h3>Prueba de generación de PDF</h3>
+                    <p>Este es un texto largo de prueba para verificar que el sistema de descarga de PDF funciona
+                        correctamente.
+                        En versiones anteriores, la biblioteca html2pdf encontraba dificultades porque este contenido no
+                        estaba conectado
+                        directamente al DOM de cierta manera, resultando en páginas en blanco.</p>
+                    <p>Al hacer clic en descargar, el generador deberá capturar este texto fielmente con sus respectivos
+                        formatos y
+                        generar un archivo PDF visible.</p>
+                </div>
+
+                <button class="btn-outline" onclick="app.navigateTo('grid')">Volver</button>
+            </div>
+        </section>
+
         <!-- View Premium 1 -->
         <section id="view-premium-1" class="view" aria-labelledby="premium-title-1">
             <div class="video-detail-container">
@@ -640,7 +691,11 @@
                         transición no se gestiona adecuadamente.</p>
                 </div>
 
-                <div style="text-align: center; margin-top: 3rem;">
+                <div
+                    style="text-align: center; margin-top: 3rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                    <button class="btn-primary" style="background:var(--accent-blue);"
+                        onclick="alert('Generando PDF con marca de agua VIP...')"><i class="fa-solid fa-file-pdf"></i>
+                        Descargar PDF del Artículo</button>
                     <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
                 </div>
             </div>
@@ -690,7 +745,11 @@
                         atadas a esta deuda de rentas corporativas.</p>
                 </div>
 
-                <div style="text-align: center; margin-top: 3rem;">
+                <div
+                    style="text-align: center; margin-top: 3rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                    <button class="btn-primary" style="background:var(--accent-blue);"
+                        onclick="alert('Generando PDF con marca de agua VIP...')"><i class="fa-solid fa-file-pdf"></i>
+                        Descargar PDF del Artículo</button>
                     <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
                 </div>
             </div>
@@ -743,7 +802,11 @@
                         consenso es unánime: la tecnología va tres décadas por delante de la legislación.</p>
                 </div>
 
-                <div style="text-align: center; margin-top: 3rem;">
+                <div
+                    style="text-align: center; margin-top: 3rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                    <button class="btn-primary" style="background:var(--accent-blue);"
+                        onclick="alert('Generando PDF con marca de agua VIP...')"><i class="fa-solid fa-file-pdf"></i>
+                        Descargar PDF del Artículo</button>
                     <button class="btn-outline" onclick="app.navigateTo('grid')">Volver a Selección Premium</button>
                 </div>
             </div>
@@ -1069,7 +1132,7 @@
         <!-- Modal: Editar Artículo Completo -->
         <div class="modal-overlay" id="edit-full-article-modal"
             onclick="if(event.target === this) app.closeModal('edit-full-article-modal')">
-            <div class="modal-content" style="max-width: 900px; width: 95%;">
+            <div class="modal-content" style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header">
                     <h3><i class="fa-solid fa-pen-nib" style="margin-right: 10px; color: var(--primary);"></i> Editor
                         Avanzado de Artículo</h3>
@@ -1086,14 +1149,23 @@
                         <label>Título del Artículo</label>
                         <input type="text" id="full-edit-title" placeholder="Título en grande">
                     </div>
+
+                    <!-- NEW: Importar documento -->
+                    <div class="input-group"
+                        style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--accent-blue); border-radius: 8px;">
+                        <label for="import-doc-file" style="color: var(--accent-blue);"><i
+                                class="fa-solid fa-file-import"></i> Auto-rellenar desde Documento (PDF o Word)</label>
+                        <input type="file" id="import-doc-file" accept=".pdf,.docx"
+                            style="padding: 0.5rem; background: white;" onchange="app.importTextFromFile(event)">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Sube un archivo
+                            para extraer automáticamente su texto hacia la caja de contenido abajo.</span>
+                    </div>
+
                     <div class="input-group">
-                        <label>Contenido del Artículo (HTML Soportado)</label>
-                        <textarea id="full-edit-content" rows="15"
+                        <label>Contenido del Artículo</label>
+                        <textarea id="full-edit-content" rows="6"
                             placeholder="Escribe el contenido completo del artículo aquí..."
-                            style="resize: vertical; font-family: monospace; font-size: 0.9rem; line-height: 1.5; padding: 1rem;"></textarea>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;"><i
-                                class="fa-solid fa-circle-info"></i> Puedes usar etiquetas HTML como &lt;p&gt;,
-                            &lt;h3&gt;, &lt;b&gt;, &lt;img&gt; para dar formato a la noticia.</span>
+                            style="resize: vertical; font-family: monospace; font-size: 0.9rem; line-height: 1.5; padding: 1rem; width: 100%; box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;"></textarea>
                     </div>
                     <div class="input-group" style="margin-top: 1rem;">
                         <label for="full-edit-video">Video Destacado del Artículo Completo (MP4/WebM)</label>
@@ -1124,9 +1196,38 @@
             </div>
         </div>
 
+        <!-- Modal: Editar Banner -->
+        <div class="modal-overlay" id="edit-banner-modal"
+            onclick="if(event.target === this) app.closeModal('edit-banner-modal')">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-ad" style="margin-right: 10px; color: var(--primary);"></i> Editar Banner</h3>
+                    <button class="close-btn" onclick="app.closeModal('edit-banner-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div class="input-group">
+                        <label>Texto del Banner</label>
+                        <input type="text" id="banner-edit-text" placeholder="Ej: Anuncio de Prueba">
+                    </div>
+                    <div class="input-group">
+                        <label>Color de Fondo (Linear Gradient)</label>
+                        <input type="text" id="banner-edit-bg" placeholder="Ej: linear-gradient(45deg, #FF4757, #FF6B81)">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Puedes usar un color hex (#FF0000) o un gradiente CSS.</span>
+                    </div>
+                    <button class="btn-primary" onclick="app.saveBannerEdit()" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-save" style="margin-right: 8px;"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <script src="script.js"></script>
 </body>
 
