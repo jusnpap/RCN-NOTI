@@ -52,6 +52,12 @@ export default {
                         }
                         return new Response(JSON.stringify({ success: true, message: 'Anuncio eliminado' }), { status: 200 });
                     }
+
+                    if (data.action === 'edit_banner') {
+                        const bannerData = { text: data.text, bg: data.bg };
+                        await env.KV_NOTICIAS.put('rcn_saved_banner', JSON.stringify(bannerData));
+                        return new Response(JSON.stringify({ success: true, message: 'Banner actualizado' }), { status: 200 });
+                    }
                     return new Response(JSON.stringify({ error: 'Action not supported' }), { status: 400 });
                 } catch (error) {
                     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -84,6 +90,12 @@ export default {
                         });
                         await env.KV_NOTICIAS.put('rcn_messages', JSON.stringify(messages));
                         return new Response(JSON.stringify({ success: true, message: 'Mensaje enviado' }), { status: 200 });
+                    }
+                    if (data.action === 'delete') {
+                        let messages = await env.KV_NOTICIAS.get('rcn_messages', { type: 'json' }) || [];
+                        messages = messages.filter(m => String(m.id) !== String(data.id));
+                        await env.KV_NOTICIAS.put('rcn_messages', JSON.stringify(messages));
+                        return new Response(JSON.stringify({ success: true, message: 'Mensaje eliminado' }), { status: 200 });
                     }
                     return new Response(JSON.stringify({ error: 'Action not supported' }), { status: 400 });
                 } catch (error) {
