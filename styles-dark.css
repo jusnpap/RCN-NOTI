@@ -109,3 +109,14 @@ body.dark-mode {
 .dark-mode div[style*="background: #f8fafc"] h3 {
     color: var(--text-main) !important;
 }
+
+.dark-mode .admin-banner-edit {
+    background: rgba(23, 27, 38, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.dark-mode .admin-controls {
+    background: rgba(23, 27, 38, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+}

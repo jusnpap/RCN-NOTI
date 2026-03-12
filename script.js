@@ -922,22 +922,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     const controls = document.createElement('div');
                     controls.className = 'admin-controls';
                     controls.style.position = 'absolute';
-                    controls.style.top = '10px';
-                    controls.style.right = '10px';
+                    controls.style.top = '15px';
+                    controls.style.right = '15px';
                     controls.style.zIndex = '10';
                     controls.style.display = 'flex';
-                    controls.style.gap = '8px';
+                    controls.style.gap = '10px';
 
                     const btnEdit = document.createElement('button');
                     btnEdit.innerHTML = '<i class="fa-solid fa-pen"></i>';
                     btnEdit.style.background = '#3B82F6';
                     btnEdit.style.color = 'white';
                     btnEdit.style.border = 'none';
-                    btnEdit.style.width = '36px';
-                    btnEdit.style.height = '36px';
+                    btnEdit.style.width = '38px';
+                    btnEdit.style.height = '38px';
                     btnEdit.style.borderRadius = '50%';
                     btnEdit.style.cursor = 'pointer';
-                    btnEdit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    btnEdit.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
                     btnEdit.title = "Editar Anuncio";
                     btnEdit.onclick = (e) => {
                         e.stopPropagation();
@@ -949,11 +949,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnDelete.style.background = '#EF4444';
                     btnDelete.style.color = 'white';
                     btnDelete.style.border = 'none';
-                    btnDelete.style.width = '36px';
-                    btnDelete.style.height = '36px';
+                    btnDelete.style.width = '38px';
+                    btnDelete.style.height = '38px';
                     btnDelete.style.borderRadius = '50%';
                     btnDelete.style.cursor = 'pointer';
-                    btnDelete.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    btnDelete.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
                     btnDelete.title = "Eliminar Anuncio";
                     btnDelete.onclick = (e) => {
                         e.stopPropagation();
@@ -980,18 +980,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const btn = document.createElement('button');
                     btn.className = 'admin-banner-edit';
                     btn.innerHTML = '<i class="fa-solid fa-pen"></i> EDITAR ESTE BANNER';
-                    btn.style.position = 'absolute';
-                    btn.style.bottom = '10px';
-                    btn.style.right = '10px';
-                    btn.style.background = 'white';
-                    btn.style.color = 'var(--primary)';
-                    btn.style.padding = '5px 15px';
-                    btn.style.borderRadius = '20px';
-                    btn.style.fontSize = '0.8rem';
-                    btn.style.fontWeight = 'bold';
-                    btn.style.border = 'none';
-                    btn.style.cursor = 'pointer';
-                    btn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
                     btn.onclick = (e) => {
                         e.stopPropagation();
                         this.openEditBannerModal();
@@ -1460,6 +1448,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.closeModal('edit-banner-modal');
             alert("Banner actualizado correctamente.");
+        },
+
+        animateCardsIn() {
+            const cards = document.querySelectorAll('.video-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('show');
+                    card.style.animation = `cardEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+                }, index * 100);
+            });
         }
     };
 
@@ -1487,6 +1485,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     app.applySavedAnnouncements();
+    // Start animations after content is ready
+    setTimeout(() => app.animateCardsIn(), 100);
 
     // New: Apply saved banner
     const savedBanner = JSON.parse(localStorage.getItem('rcn_saved_banner') || '{}');
