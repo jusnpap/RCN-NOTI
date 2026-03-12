@@ -530,6 +530,15 @@ body {
     transform: scale(1.15) rotate(5deg);
 }
 
+.message-card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary) !important;
+}
+
+.message-card button:hover {
+    transform: scale(1.1);
+}
+
 .btn-outline {
     background: transparent;
     border: 1px solid var(--accent-blue);

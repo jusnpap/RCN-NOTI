@@ -109,12 +109,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSettings.parentNode.insertBefore(msgToggle, btnSettings.nextSibling);
                     }
                 }
+
+                // Add Banner Admin toggle
+                let bannerToggle = document.getElementById('admin-banner-btn');
+                if (!bannerToggle) {
+                    bannerToggle = document.createElement('button');
+                    bannerToggle.id = 'admin-banner-btn';
+                    bannerToggle.className = 'btn-profile';
+                    bannerToggle.style.color = '#F59E0B';
+                    bannerToggle.innerHTML = '<i class="fa-solid fa-ad"></i> ADMINISTRAR BANNER';
+                    bannerToggle.onclick = () => {
+                        this.openEditBannerModal();
+                        document.getElementById('user-dropdown').classList.remove('active');
+                    };
+                    if (msgToggle) {
+                        msgToggle.parentNode.insertBefore(bannerToggle, msgToggle.nextSibling);
+                    }
+                }
             } else {
                 if (adminToggle) adminToggle.remove();
                 this.adminModeActive = false;
 
                 let msgToggle = document.getElementById('admin-msgs-btn');
                 if (msgToggle) msgToggle.remove();
+
+                let bannerToggle = document.getElementById('admin-banner-btn');
+                if (bannerToggle) bannerToggle.remove();
             }
 
             this.renderAdminControls();
@@ -1396,15 +1416,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = `<p style="text-align:center; color: var(--text-muted); padding: 2rem;">No hay mensajes nuevos.</p>`;
             } else {
                 container.innerHTML = messages.reverse().map(msg => `
-                    <div style="background: var(--bg-main); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <strong style="color: var(--text-main); font-size: 1.1rem;">${msg.name}</strong>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">${msg.date}</span>
+                    <div id="msg-card-${msg.id}" class="message-card" style="background: var(--bg-main); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light); transition: var(--transition); position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; align-items: flex-start;">
+                            <div>
+                                <strong style="color: var(--text-main); font-size: 1.1rem; display: block;">${msg.name}</strong>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">${msg.date}</span>
+                            </div>
+                            <button onclick="app.deleteMessage('${msg.id}')" style="background: rgba(239, 68, 68, 0.1); color: #EF4444; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: all 0.2s;" title="Eliminar mensaje">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
-                        <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--primary);">${msg.email}</div>
-                        <p style="color: var(--text-muted); line-height: 1.5; font-size: 0.95rem;">${msg.message}</p>
+                        <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--primary); font-weight: 600;">${msg.email}</div>
+                        <div id="msg-text-${msg.id}" class="message-text" style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; cursor: pointer; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" onclick="app.toggleMessage('${msg.id}')">
+                            ${msg.message}
+                        </div>
+                        <button onclick="app.toggleMessage('${msg.id}')" id="msg-btn-${msg.id}" style="background: transparent; border: none; color: var(--accent-blue); font-size: 0.85rem; font-weight: bold; margin-top: 10px; cursor: pointer; padding: 0;">
+                            VER MÁS
+                        </button>
                     </div>
                 `).join('');
+            }
+        },
+
+        toggleMessage(id) {
+            const textEl = document.getElementById(`msg-text-${id}`);
+            const btnEl = document.getElementById(`msg-btn-${id}`);
+            if (textEl.style.display === 'block') {
+                textEl.style.display = '-webkit-box';
+                btnEl.innerText = 'VER MÁS';
+            } else {
+                textEl.style.display = 'block';
+                btnEl.innerText = 'CERRAR';
+            }
+        },
+
+        async deleteMessage(id) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este mensaje?')) return;
+
+            const card = document.getElementById(`msg-card-${id}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(50px)';
+                setTimeout(() => card.remove(), 400);
+            }
+
+            // Sync deletion
+            try {
+                // Update local storage
+                let messages = JSON.parse(localStorage.getItem('rcn_messages') || '[]');
+                messages = messages.filter(m => String(m.id) !== String(id));
+                localStorage.setItem('rcn_messages', JSON.stringify(messages));
+
+                // Attempt KV deletion
+                await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                });
+            } catch (err) {
+                console.error('Error deleting message:', err);
             }
         },
 
