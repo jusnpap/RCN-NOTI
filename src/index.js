@@ -124,11 +124,44 @@ export default {
             }
         }
 
-        // Serve Static Assets (HTML, CSS, JS) from KV or direct Worker response
-        // For simplicity since it's just 3 files, we'll map them from the local env during build or rely on Cloudflare Pages.
-        // However, if the user deployed this as a standard Worker (`npx wrangler deploy`), 
-        // the static assets won't be served automatically without an assets setup.
-        // Returning 404 for unknown routes to not break standard behavior if used via standard Pages routing.
-        return env.ASSETS.fetch(request);
+        // Serve Static Assets with SEO Rewriting
+        const response = await env.ASSETS.fetch(request);
+        
+        // Only rewrite if it's an HTML response
+        const contentType = response.headers.get('Content-Type');
+        if (contentType && contentType.includes('text/html')) {
+            const articleId = url.searchParams.get('id') || 'home';
+            
+            // Professional Default Tags
+            let seoTitle = "RCN Noticias - Información de Última Hora";
+            let seoDesc = "Actualidad, deportes y entretenimiento con la mayor veracidad.";
+            let seoImg = "https://rcn-noticias.pages.dev/assets/logo.png"; // Fallback to logo
+
+            if (articleId === 'video-8') {
+                seoTitle = "Descubrimiento Arqueológico en el Amazonas | RCN";
+                seoDesc = "Una civilización avanzada oculta por siglos sale a la luz.";
+                seoImg = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1200";
+            }
+
+            return new HTMLRewriter()
+                .on('title', {
+                    element(e) { e.setInnerContent(seoTitle); }
+                })
+                .on('meta[name="description"]', {
+                    element(e) { e.setAttribute('content', seoDesc); }
+                })
+                .on('head', {
+                    element(e) {
+                        e.append(`<meta property="og:title" content="${seoTitle}">`, { html: true });
+                        e.append(`<meta property="og:description" content="${seoDesc}">`, { html: true });
+                        e.append(`<meta property="og:image" content="${seoImg}">`, { html: true });
+                        e.append(`<meta property="og:type" content="website">`, { html: true });
+                        e.append(`<meta name="twitter:card" content="summary_large_image">`, { html: true });
+                    }
+                })
+                .transform(response);
+        }
+
+        return response;
     }
 };

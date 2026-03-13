@@ -762,6 +762,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
+        isValidLuhn(number) {
+            let sum = 0;
+            let shouldDouble = false;
+            const stripped = number.replace(/\D/g, '');
+            for (let i = stripped.length - 1; i >= 0; i--) {
+                let digit = parseInt(stripped.charAt(i));
+                if (shouldDouble) {
+                    if ((digit *= 2) > 9) digit -= 9;
+                }
+                sum += digit;
+                shouldDouble = !shouldDouble;
+            }
+            return (sum % 10) === 0;
+        },
+
         processCheckout() {
             const cardInput = document.getElementById('checkout-card').value;
             const expInput = document.getElementById('checkout-exp').value;
@@ -770,6 +785,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!cardInput || cardInput.length < 15) {
                 alert('Por favor, ingresa un número de tarjeta válido.');
+                return;
+            }
+            if (!this.isValidLuhn(cardInput)) {
+                alert('El número de tarjeta no es válido (Fallo de validación Luhn).');
                 return;
             }
             if (!expInput || !cvvInput) {
@@ -1709,11 +1728,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial animation
     setTimeout(animateCardsIn, 200);
 
-    // Ensure all videos show a static first frame natively without javascript generation (bypassing local CORS canvas errors)
-    const videos = document.querySelectorAll('.preview-video');
+    // Video error handling for posters and initial frame
+    const videos = document.querySelectorAll('.preview-video, .plyr-video');
     videos.forEach(video => {
-        video.style.opacity = '1'; // keep visible by default
+        video.style.opacity = '1'; 
+        video.onerror = function() {
+            console.warn("Video failed to load, applying fallback poster.");
+            this.style.display = 'none';
+            const container = this.parentElement;
+            if (container && !container.querySelector('.video-fallback-img')) {
+                const img = document.createElement('img');
+                img.className = 'video-fallback-img';
+                img.src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=800'; // Default news image
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                container.appendChild(img);
+            }
+        };
     });
+
+    // Debounced Search Implementation
+    const searchInput = document.getElementById('news-search');
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.toLowerCase().trim();
+            searchTimeout = setTimeout(() => {
+                const cards = document.querySelectorAll('.video-card');
+                cards.forEach(card => {
+                    const title = card.querySelector('.news-summary-title')?.textContent.toLowerCase() || '';
+                    const text = card.querySelector('.news-summary-text')?.textContent.toLowerCase() || '';
+                    if (title.includes(query) || text.includes(query)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }, 300);
+        });
+    }
 
     // Hash routing initialization
     const handleHash = () => {
@@ -1733,4 +1788,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', handleHash);
     // Call on first load after a slight delay to ensure UI is ready
     setTimeout(handleHash, 50);
+
+    // Initial Profile Sync
+    if (app.isLoggedIn) {
+        const userNameLower = app.currentUser.toLowerCase();
+        let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+        const userData = registeredUsers[userNameLower];
+        if (userData) {
+            const emailEl = document.getElementById('profile-email');
+            const phoneEl = document.getElementById('profile-phone');
+            if (emailEl) emailEl.textContent = userData.email || `${userNameLower}@correo.com`;
+            if (phoneEl) phoneEl.textContent = userData.phone || 'Sin registrar';
+        }
+    }
 });

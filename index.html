@@ -57,6 +57,11 @@
                     </button>
                 </div>
             </div>
+            <div class="search-container" style="position: relative; display: flex; align-items: center;">
+                <input type="text" id="news-search" placeholder="Buscar noticias..." 
+                    style="padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: 20px; border: 1px solid var(--border-light); background: var(--bg-main); color: var(--text-main); font-size: 0.9rem; width: 220px; outline: none; transition: all 0.3s ease;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; color: var(--text-muted); font-size: 0.9rem;"></i>
+            </div>
             <div class="social-icons" style="margin-left: 10px;">
                 <a href="https://www.facebook.com" target="_blank" aria-label="Facebook"><i
                         class="fa-brands fa-facebook-f"></i></a>
@@ -80,8 +85,8 @@
                     <!-- Overlay for better text readability -->
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)); border-radius: var(--radius-lg); z-index: 1;"></div>
                     <h2 id="main-banner-text"
-                        style="font-size: clamp(2rem, 8vw, 5.5rem); font-weight: 900; margin: 0; letter-spacing: -2px; text-shadow: 4px 4px 20px rgba(0,0,0,0.8); position: relative; z-index: 2; text-transform: uppercase; line-height: 1.1;">
-                        Anuncio Prueba</h2>
+                        style="font-size: clamp(2rem, 8vw, 4.5rem); font-weight: 900; margin: 0; letter-spacing: -2px; text-shadow: 4px 4px 20px rgba(0,0,0,0.8); position: relative; z-index: 2; text-transform: uppercase; line-height: 1.1;">
+                        Descubrimiento Arqueológico: Ciudad Perdida en el Amazonas</h2>
                 </div>
             </div>
 
@@ -101,6 +106,10 @@
                     <div class="card-content">
                         <div class="card-badge">NUEVO</div>
                         <h3 class="news-summary-title">Rescate en la montaña</h3>
+                        <div class="card-meta" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span><i class="fa-solid fa-user-pen"></i> Carlos Ruiz</span> | 
+                            <span><i class="fa-solid fa-calendar-day"></i> 12 Mar 2026</span>
+                        </div>
                         <p class="news-summary-text">Equipos especiales lograron rescatar a un grupo de excursionistas
                             perdidos durante la tormenta del fin de semana...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
@@ -121,6 +130,10 @@
                     <div class="card-content">
                         <div class="card-badge">TENDENCIA</div>
                         <h3 class="news-summary-title">Nuevo parque ecológico</h3>
+                        <div class="card-meta" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span><i class="fa-solid fa-user-pen"></i> Mario Mora</span> | 
+                            <span><i class="fa-solid fa-calendar-day"></i> 11 Mar 2026</span>
+                        </div>
                         <p class="news-summary-text">La ciudad inaugura un inmenso espacio verde con energía solar,
                             lagos artificiales y senderos interactivos...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
@@ -141,6 +154,10 @@
                     <div class="card-content">
                         <div class="card-badge">DESTACADO</div>
                         <h3 class="news-summary-title">Avances en tecnología espacial</h3>
+                        <div class="card-meta" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span><i class="fa-solid fa-user-pen"></i> Elena Gomez</span> | 
+                            <span><i class="fa-solid fa-calendar-day"></i> 11 Mar 2026</span>
+                        </div>
                         <p class="news-summary-text">Científicos presentan un revolucionario motor que podría reducir
                             los tiempos de viaje a Marte a la mitad...</p>
                         <div class="read-more">Leer más <i class="fa-solid fa-arrow-right"></i></div>
@@ -629,15 +646,9 @@
                 </div>
 
                 <div class="video-description scrollable-content">
-                    <h3>Prueba de generación de PDF</h3>
-                    <p>Este es un texto largo de prueba para verificar que el sistema de descarga de PDF funciona
-                        correctamente.
-                        En versiones anteriores, la biblioteca html2pdf encontraba dificultades porque este contenido no
-                        estaba conectado
-                        directamente al DOM de cierta manera, resultando en páginas en blanco.</p>
-                    <p>Al hacer clic en descargar, el generador deberá capturar este texto fielmente con sus respectivos
-                        formatos y
-                        generar un archivo PDF visible.</p>
+                    <h3>Descubrimiento Arqueológico: Evidencias de una civilización avanzada</h3>
+                    <p>Un equipo internacional de arqueólogos ha revelado el hallazgo de un complejo urbano masivo oculto bajo la densa vegetación del Amazonas. Mediante el uso de tecnología LiDAR, se han identificado pirámides, calzadas y complejos sistemas de riego que datan de hace más de 1,500 años.</p>
+                    <p>Este descubrimiento desafía las nociones previas sobre la densidad de población y la complejidad social de las culturas amazónicas precolombinas. "Estamos ante una red de ciudades que se extiende por cientos de kilómetros", afirmó el director de la excavación.</p>
                 </div>
 
                 <button class="btn-outline" onclick="app.navigateTo('grid')">Volver</button>
