@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (editedFull[id] && editedFull[id].videoUrl) fullData.videoUrl = editedFull[id].videoUrl;
             
             editedFull[id] = fullData;
-            localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
+            this.safeSetItem('rcn_edited_full_articles', editedFull);
 
             // Cloudflare KV Sync
             try {
@@ -1408,7 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (edited[id] && edited[id].videoUrl) cardData.videoUrl = edited[id].videoUrl;
 
             edited[id] = cardData;
-            localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
+            this.safeSetItem('rcn_edited_announcements', edited);
 
             // Cloudflare KV Sync
             try {
@@ -1453,13 +1453,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Sync locally so there's always a backup
                         if (data.deleted && data.deleted.length > 0) {
-                            localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
+                            this.safeSetItem('rcn_deleted_announcements', data.deleted);
                         }
                         if (data.edited && Object.keys(data.edited).length > 0) {
-                            localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
+                            this.safeSetItem('rcn_edited_announcements', data.edited);
                         }
                         if (data.editedFull && Object.keys(data.editedFull).length > 0) {
-                            localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                            this.safeSetItem('rcn_edited_full_articles', data.editedFull);
                         }
                     }
                 }
@@ -1643,8 +1643,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         editedFull[id].videoUrl = videoUrl;
                     });
                     
-                    localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
-                    localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
+                    // SAVE SAFELY - will strip blobs if quota hit
+                    this.safeSetItem('rcn_edited_announcements', edited);
+                    this.safeSetItem('rcn_edited_full_articles', editedFull);
 
                     setTimeout(() => {
                         this.closeModal('universal-video-modal');
@@ -1674,20 +1675,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await response.json();
                     
                     if (data.banner) {
-                        localStorage.setItem('rcn_saved_banner', JSON.stringify(data.banner));
+                        this.safeSetItem('rcn_saved_banner', data.banner);
                         this.renderBannerUI(data.banner);
                     }
                     
                     if (data.deleted) {
-                        localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
+                        this.safeSetItem('rcn_deleted_announcements', data.deleted);
                     }
                     
                     if (data.edited) {
-                        localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
+                        this.safeSetItem('rcn_edited_announcements', data.edited);
                     }
                     
                     if (data.editedFull) {
-                        localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                        this.safeSetItem('rcn_edited_full_articles', data.editedFull);
                     }
                     
                     // After saving all to local, run apply once
@@ -1915,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hasNewImg) bannerData.imgData = imgData;
             else if (savedBanner.imgData) bannerData.imgData = savedBanner.imgData;
             
-            localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
+            this.safeSetItem('rcn_saved_banner', bannerData);
 
             // Sync to Worker
             try {
@@ -2074,6 +2075,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestAnimationFrame(animate);
             };
             animate();
+        },
+
+        // Safe Storage Utility
+        safeSetItem(key, value) {
+            try {
+                const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+                localStorage.setItem(key, stringValue);
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                    console.warn(`Storage quota exceeded for key: ${key}. Stripping blobs and retrying...`);
+                    if (typeof value === 'object') {
+                        const stripped = this.stripBlobs(value);
+                        try {
+                            localStorage.setItem(key, JSON.stringify(stripped));
+                        } catch (e2) {
+                            console.error('Even stripped data exceeds quota, skipping local storage.');
+                        }
+                    }
+                } else {
+                    console.error('Error saving to localStorage:', e);
+                }
+            }
+        },
+
+        stripBlobs(obj) {
+            if (!obj || typeof obj !== 'object') return obj;
+            const newObj = Array.isArray(obj) ? [] : {};
+            for (const key in obj) {
+                const val = obj[key];
+                if (typeof val === 'string' && val.length > 50000) { // Strip strings > 50KB (base64 blobs)
+                    newObj[key] = "[BLOB_TOO_LARGE_FOR_CACHE]";
+                } else if (typeof val === 'object') {
+                    newObj[key] = this.stripBlobs(val);
+                } else {
+                    newObj[key] = val;
+                }
+            }
+            return newObj;
+        },
+
+        init() {
+            // Cleanup huge toxic data from previous versions
+            ['rcn_edited_announcements', 'rcn_edited_full_articles', 'rcn_saved_banner'].forEach(key => {
+                try {
+                    const data = localStorage.getItem(key);
+                    if (data && data.length > 500 * 1024) { // If > 500KB, clear it to be safe
+                        console.info(`Cleaning up large legacy data for ${key}`);
+                        localStorage.removeItem(key);
+                    }
+                } catch(e) {}
+            });
         }
     };
 
@@ -2110,6 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Unified synchronization from cloud
+    app.init(); // Clean storage before sync
     app.syncFromCloud();
     app.initParticles();
 
