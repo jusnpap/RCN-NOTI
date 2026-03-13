@@ -1750,24 +1750,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Debounced Search Implementation
     const searchInput = document.getElementById('news-search');
+    const searchClear = document.getElementById('search-clear');
     let searchTimeout;
+
     if (searchInput) {
+        const performSearch = (query) => {
+            const cards = document.querySelectorAll('.video-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.news-summary-title')?.textContent.toLowerCase() || '';
+                const text = card.querySelector('.news-summary-text')?.textContent.toLowerCase() || '';
+                if (query === '' || title.includes(query) || text.includes(query)) {
+                    card.style.display = ''; // Restore original display (likely block or from class)
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide clear button
+            if (searchClear) {
+                searchClear.style.display = query.length > 0 ? 'inline-block' : 'none';
+            }
+        };
+
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const query = e.target.value.toLowerCase().trim();
-            searchTimeout = setTimeout(() => {
-                const cards = document.querySelectorAll('.video-card');
-                cards.forEach(card => {
-                    const title = card.querySelector('.news-summary-title')?.textContent.toLowerCase() || '';
-                    const text = card.querySelector('.news-summary-text')?.textContent.toLowerCase() || '';
-                    if (title.includes(query) || text.includes(query)) {
-                        card.style.display = 'flex';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }, 300);
+            searchTimeout = setTimeout(() => performSearch(query), 300);
         });
+
+        if (searchClear) {
+            searchClear.addEventListener('click', () => {
+                searchInput.value = '';
+                performSearch('');
+                searchInput.focus();
+            });
+        }
     }
 
     // Hash routing initialization
