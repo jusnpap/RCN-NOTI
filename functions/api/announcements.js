@@ -49,12 +49,13 @@ export async function onRequestPost(context) {
 
         // 1. Edit Card (Individual Key)
         if (data.action === 'edit') {
+            const existing = await context.env.KV_NOTICIAS.get(`card:${data.id}`, { type: 'json' }) || {};
             const cardData = {
-                title: data.title,
-                desc: data.desc,
-                badgeTxt: data.badgeTxt,
-                imgUrl: data.imgUrl,
-                videoUrl: data.videoUrl
+                title: data.title || existing.title,
+                desc: data.desc || existing.desc,
+                badgeTxt: data.badgeTxt !== undefined ? data.badgeTxt : existing.badgeTxt,
+                imgUrl: data.imgUrl || existing.imgUrl,
+                videoUrl: data.videoUrl || existing.videoUrl
             };
             await context.env.KV_NOTICIAS.put(`card:${data.id}`, JSON.stringify(cardData));
             return new Response(JSON.stringify({ success: true, message: 'Anuncio guardado' }), { status: 200 });
@@ -62,10 +63,11 @@ export async function onRequestPost(context) {
 
         // 2. Edit Full Article (Individual Key)
         if (data.action === 'edit_full') {
+            const existing = await context.env.KV_NOTICIAS.get(`full:${data.id}`, { type: 'json' }) || {};
             const fullData = {
-                title: data.title,
-                content: data.content,
-                videoUrl: data.videoUrl
+                title: data.title || existing.title,
+                content: data.content || existing.content,
+                videoUrl: data.videoUrl || existing.videoUrl
             };
             await context.env.KV_NOTICIAS.put(`full:${data.id}`, JSON.stringify(fullData));
             return new Response(JSON.stringify({ success: true, message: 'Artículo guardado' }), { status: 200 });
@@ -86,10 +88,11 @@ export async function onRequestPost(context) {
 
         // 4. Edit Banner
         if (data.action === 'edit_banner') {
+            const existing = await context.env.KV_NOTICIAS.get('rcn_banner', { type: 'json' }) || {};
             const bannerData = {
-                text: data.text,
-                bg: data.bg,
-                imgData: data.imgData
+                text: data.text || existing.text,
+                bg: data.bg || existing.bg,
+                imgData: data.imgData || existing.imgData
             };
             await context.env.KV_NOTICIAS.put('rcn_banner', JSON.stringify(bannerData));
             return new Response(JSON.stringify({ success: true, message: 'Banner actualizado' }), { status: 200 });

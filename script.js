@@ -231,11 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalBtnHtml = btn.innerHTML;
 
             let videoUrl = '';
+            let hasNewVideo = false;
 
             if (videoInput && videoInput.files && videoInput.files[0]) {
                 const file = videoInput.files[0];
-                if (file.size > 100 * 1024 * 1024) {
-                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB.");
+                // Cloudflare KV limit is 25MB total. With Base64 overhead, safe limit is around 18MB.
+                if (file.size > 20 * 1024 * 1024) {
+                    alert("El archivo de video es demasiado grande para la nube. El límite recomendado es 20MB para asegurar la sincronización.");
                     return;
                 }
 
@@ -246,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         reader.onerror = e => reject(e);
                         reader.readAsDataURL(file);
                     });
+                    hasNewVideo = true;
                 } catch (e) {
                     console.error("No se pudo leer el archivo de video", e);
                     alert("Hubo un error procesando el archivo de video.");
@@ -262,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = newTitle;
                 if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = newContent;
 
-                if (videoUrl.trim().length > 0) {
+                if (hasNewVideo && videoUrl.trim().length > 0) {
                     const playerContainer = section.querySelector('.main-video-player');
                     if (playerContainer) {
                         let videoEl = playerContainer.querySelector('video');
@@ -289,15 +292,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Fallback Local Storage
             let editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
-            editedFull[id] = { title: newTitle, content: newContent, videoUrl: videoUrl };
+            const fullData = { title: newTitle, content: newContent };
+            if (hasNewVideo) fullData.videoUrl = videoUrl;
+            else if (editedFull[id] && editedFull[id].videoUrl) fullData.videoUrl = editedFull[id].videoUrl;
+            
+            editedFull[id] = fullData;
             localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
 
             // Cloudflare KV Sync
             try {
+                const payload = { action: 'edit_full', id, title: newTitle, content: newContent };
+                if (hasNewVideo) payload.videoUrl = videoUrl;
+
                 const response = await fetch('/api/announcements', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent, videoUrl: videoUrl })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
@@ -308,16 +318,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.innerHTML = originalBtnHtml;
                         btn.style.background = '';
                         btn.disabled = false;
+                        videoInput.value = ''; // Reset input
                     }, 1500);
                 } else {
-                    throw new Error('Sync failed');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Sync failed');
                 }
             } catch (err) {
                 console.error('Error syncing full article to Cloudflare KV:', err);
-                alert('Guardado localmente, pero falló la sincronización con la nube (posiblemente por tamaño de video).');
+                alert('Guardado localmente, pero falló la sincronización con la nube: ' + err.message);
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
-                this.closeModal('edit-full-article-modal');
+                // No cerramos el modal para que el usuario pueda intentar corregir (ej. quitar video pesado)
             }
         },
 
@@ -1272,11 +1284,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalBtnHtml = btn.innerHTML;
 
             let videoUrl = '';
+            let hasNewVideo = false;
 
             if (videoInput.files && videoInput.files[0]) {
                 const file = videoInput.files[0];
-                if (file.size > 100 * 1024 * 1024) { // Increased limit
-                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB.");
+                if (file.size > 20 * 1024 * 1024) {
+                    alert("El archivo de video es demasiado grande para la nube. El límite recomendado es 20MB.");
                     return;
                 }
 
@@ -1287,6 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         reader.onerror = e => reject(e);
                         reader.readAsDataURL(file);
                     });
+                    hasNewVideo = true;
                 } catch (e) {
                     console.error("No se pudo leer el archivo de video", e);
                     alert("Hubo un error procesando el archivo de video.");
@@ -1320,7 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         oldIcon.style.zIndex = '2';
                     }
 
-                    if (videoUrl.trim().length > 0) {
+                    if (hasNewVideo && videoUrl.trim().length > 0) {
                         const oldImg = thumbContainer.querySelector('img');
                         if (oldImg) oldImg.remove();
 
@@ -1368,15 +1382,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
-            edited[id] = { title: title, desc: desc, badgeTxt: badgeTxt, imgUrl: imgUrl, videoUrl: videoUrl };
+            const cardData = { title, desc, badgeTxt, imgUrl };
+            if (hasNewVideo) cardData.videoUrl = videoUrl;
+            else if (edited[id] && edited[id].videoUrl) cardData.videoUrl = edited[id].videoUrl;
+
+            edited[id] = cardData;
             localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
 
             // Cloudflare KV Sync
             try {
+                const payload = { action: 'edit', id, title, desc, badgeTxt, imgUrl };
+                if (hasNewVideo) payload.videoUrl = videoUrl;
+
                 const response = await fetch('/api/announcements', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl, videoUrl })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
@@ -1387,16 +1408,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.innerHTML = originalBtnHtml;
                         btn.style.background = '';
                         btn.disabled = false;
+                        videoInput.value = '';
                     }, 1500);
                 } else {
-                    throw new Error('Sync failed');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Sync failed');
                 }
             } catch (err) {
                 console.error('Error syncing edit to Cloudflare KV:', err);
-                alert('Guardado localmente, pero falló la sincronización con la nube (posiblemente por tamaño de video/imagen).');
+                alert('Guardado localmente, pero falló la sincronización con la nube: ' + err.message);
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
-                this.closeModal('edit-announcement-modal');
             }
         },
 
@@ -1718,11 +1740,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalBtnHtml = btn.innerHTML;
             
             let imgData = '';
+            let hasNewImg = false;
 
             if (imgInput.files && imgInput.files[0]) {
                 const file = imgInput.files[0];
+                if (file.size > 20 * 1024 * 1024) {
+                    alert("La imagen es demasiado grande. El límite recomendado es 20MB.");
+                    return;
+                }
                 try {
                     imgData = await this.resizeImage(file, 1200, 400);
+                    hasNewImg = true;
                 } catch (e) {
                     console.error('Error resizing banner image:', e);
                     alert('Error al procesar la imagen.');
@@ -1734,26 +1762,31 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> SINCRONIZANDO...';
             btn.disabled = true;
 
-            const bannerData = { text, bg, imgData };
-
-            // Apply to UI
             const banner = document.getElementById('main-banner');
             const bannerText = document.getElementById('main-banner-text');
             bannerText.textContent = text;
             banner.style.backgroundColor = bg;
-            if (imgData) {
+            if (hasNewImg) {
                 banner.style.backgroundImage = `url(${imgData})`;
             }
 
             // Save to LocalStorage
+            let savedBanner = JSON.parse(localStorage.getItem('rcn_saved_banner') || '{}');
+            const bannerData = { text, bg };
+            if (hasNewImg) bannerData.imgData = imgData;
+            else if (savedBanner.imgData) bannerData.imgData = savedBanner.imgData;
+            
             localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
 
             // Sync to Worker
             try {
+                const payload = { action: 'edit_banner', text, bg };
+                if (hasNewImg) payload.imgData = imgData;
+
                 const response = await fetch('/api/announcements', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'edit_banner', ...bannerData })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
@@ -1764,16 +1797,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.innerHTML = originalBtnHtml;
                         btn.style.background = '';
                         btn.disabled = false;
+                        imgInput.value = '';
                     }, 1500);
                 } else {
-                    throw new Error('Sync failed');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Sync failed');
                 }
             } catch (err) {
                 console.error('Error syncing banner to KV:', err);
-                alert('Banner actualizado localmente, pero falló la sincronización con la nube.');
+                alert('Banner actualizado localmente, pero falló la sincronización con la nube: ' + err.message);
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
-                this.closeModal('edit-banner-modal');
             }
         },
 
