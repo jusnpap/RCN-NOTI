@@ -661,13 +661,8 @@ document.addEventListener('DOMContentLoaded', () => {
         togglePerformance(enabled) {
             if (enabled) {
                 document.body.classList.add('performance-mode');
-                // Stop particles if canvas exists
-                const canvas = document.getElementById('particle-canvas');
-                if (canvas) canvas.style.display = 'none';
             } else {
                 document.body.classList.remove('performance-mode');
-                const canvas = document.getElementById('particle-canvas');
-                if (canvas) canvas.style.display = 'block';
             }
             localStorage.setItem('rcn_performance', enabled);
             if (document.getElementById('settings-performance')) {
