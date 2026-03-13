@@ -1,9 +1,12 @@
 body.dark-mode {
-    --bg-main: #0F172A;
+    --bg-main: #0B0F1A;
+    --bg-secondary: #1E293B;
     --bg-white: #1E293B;
-    --text-main: #F8FAFC;
+    --text-main: #F1F5F9;
     --text-muted: #94A3B8;
-    --border-light: #334155;
+    --border-light: rgba(255, 255, 255, 0.05);
+    --bg-overlay: rgba(15, 23, 42, 0.8);
+    --blur-effect: blur(25px);
     background-image: radial-gradient(circle at 100% 0%, #172540 0%, transparent 40%),
         radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 40%);
 }

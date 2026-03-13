@@ -540,10 +540,94 @@ document.addEventListener('DOMContentLoaded', () => {
                 video.volume = vol;
             });
             // Apply to Plyr players by accessing their instance if possible, or trigger their API
-            window.players?.forEach(p => {
-                p.volume = vol;
-            });
+            if (window.players) {
+                window.players.forEach(p => {
+                    p.volume = vol;
+                });
+            }
             localStorage.setItem('rcn_volume', vol);
+        },
+
+        updateAccentColor(color) {
+            document.documentElement.style.setProperty('--accent-color', color);
+            // Calculate a slightly darker version for hover
+            const hoverColor = this.adjustColor(color, -20);
+            document.documentElement.style.setProperty('--accent-hover', hoverColor);
+            localStorage.setItem('rcn_accent_color', color);
+            
+            // Update picker UI
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                if (this.rgbToHex(swatch.style.backgroundColor).toLowerCase() === color.toLowerCase()) {
+                    swatch.style.border = '2px solid white';
+                    swatch.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+                } else {
+                    swatch.style.border = 'none';
+                    swatch.style.boxShadow = 'none';
+                }
+            });
+        },
+
+        updateFont(font) {
+            document.documentElement.style.setProperty('--current-font', font);
+            localStorage.setItem('rcn_font', font);
+            if (document.getElementById('settings-font')) {
+                document.getElementById('settings-font').value = font;
+            }
+        },
+
+        togglePerformance(enabled) {
+            if (enabled) {
+                document.body.classList.add('performance-mode');
+                // Stop particles if canvas exists
+                const canvas = document.getElementById('particle-canvas');
+                if (canvas) canvas.style.display = 'none';
+            } else {
+                document.body.classList.remove('performance-mode');
+                const canvas = document.getElementById('particle-canvas');
+                if (canvas) canvas.style.display = 'block';
+            }
+            localStorage.setItem('rcn_performance', enabled);
+            if (document.getElementById('settings-performance')) {
+                document.getElementById('settings-performance').checked = enabled;
+            }
+        },
+
+        toggleDataSaver(enabled) {
+            localStorage.setItem('rcn_data_saver', enabled);
+            if (document.getElementById('settings-data-saver')) {
+                document.getElementById('settings-data-saver').checked = enabled;
+            }
+            // Update preloads on existing videos
+            document.querySelectorAll('video').forEach(v => {
+                v.preload = enabled ? 'none' : 'auto';
+            });
+        },
+
+        adjustColor(hex, amt) {
+            let usePound = false;
+            if (hex[0] == "#") {
+                hex = hex.slice(1);
+                usePound = true;
+            }
+            let num = parseInt(hex, 16);
+            let r = (num >> 16) + amt;
+            if (r > 255) r = 255; else if (r < 0) r = 0;
+            let b = ((num >> 8) & 0x00FF) + amt;
+            if (b > 255) b = 255; else if (b < 0) b = 0;
+            let g = (num & 0x0000FF) + amt;
+            if (g > 255) g = 255; else if (g < 0) g = 0;
+            return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+        },
+
+        rgbToHex(rgb) {
+            if (!rgb) return '#FF3B3F';
+            if (rgb.startsWith('#')) return rgb;
+            const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!match) return '#FF3B3F';
+            function hex(x) {
+                return ("0" + parseInt(x).toString(16)).slice(-2);
+            }
+            return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
         },
 
         toggleAdminMode() {
@@ -1703,6 +1787,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const volInput = document.getElementById('settings-volume');
         if (volInput) volInput.value = savedVol;
     }
+
+    // Apply Advanced Settings
+    const savedAccent = localStorage.getItem('rcn_accent_color');
+    const savedFont = localStorage.getItem('rcn_font');
+    const savedPerf = localStorage.getItem('rcn_performance') === 'true';
+    const savedData = localStorage.getItem('rcn_data_saver') === 'true';
+
+    if (savedAccent) app.updateAccentColor(savedAccent);
+    if (savedFont) app.updateFont(savedFont);
+    if (savedPerf) app.togglePerformance(true);
+    if (savedData) app.toggleDataSaver(true);
+
+    // Optimize images with lazy loading
+    document.querySelectorAll('img').forEach(img => {
+        if (!img.getAttribute('loading')) {
+            img.setAttribute('loading', 'lazy');
+        }
+    });
+
+    // Optimize videos with conditional preload
+    document.querySelectorAll('video').forEach(video => {
+        if (savedData) {
+            video.preload = 'none';
+        } else if (!video.classList.contains('plyr-video')) {
+            video.preload = 'metadata'; // Better default than auto
+        }
+    });
 
     // Add subtle staggered entrance animations to grid cards on load
     const animateCardsIn = () => {

@@ -9,7 +9,7 @@
         content="Explora nuestra increíble plataforma de anuncios con estilo premium y animaciones.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;600;800&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
     <link rel="stylesheet" href="styles.css">
@@ -1104,7 +1104,7 @@
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header">
                     <h3><i class="fa-solid fa-gear" style="margin-right: 10px; color: var(--text-muted);"></i>
-                        Configuración</h3>
+                        Configuración Avanzada</h3>
                     <button class="close-btn" onclick="app.closeSettingsModal()"><i
                             class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -1113,9 +1113,30 @@
                     <div class="input-group">
                         <label for="settings-theme">Apariencia (Tema)</label>
                         <select id="settings-theme" onchange="app.changeTheme(this.value)"
-                            style="padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); font-size: 1rem; background: var(--bg-main); color: var(--text-main);">
-                            <option value="light">☀️ Modo Claro</option>
-                            <option value="dark">🌑 Modo Oscuro</option>
+                            style="padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); font-size: 1rem; background: var(--bg-secondary); color: var(--text-main); font-family: inherit;">
+                            <option value="light">☀️ Modo Claro (Premium)</option>
+                            <option value="dark">🌑 Modo Oscuro (Elegante)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Color de Acento (Personalización)</label>
+                        <div class="accent-picker" style="display: flex; gap: 10px; margin-top: 5px;">
+                            <div class="color-swatch" onclick="app.updateAccentColor('#FF3B3F')" style="background: #FF3B3F; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.1);" title="Rojo RCN"></div>
+                            <div class="color-swatch" onclick="app.updateAccentColor('#3B82F6')" style="background: #3B82F6; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" title="Azul Profundo"></div>
+                            <div class="color-swatch" onclick="app.updateAccentColor('#10B981')" style="background: #10B981; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" title="Verde Esmeralda"></div>
+                            <div class="color-swatch" onclick="app.updateAccentColor('#F59E0B')" style="background: #F59E0B; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" title="Oro Premium"></div>
+                            <div class="color-swatch" onclick="app.updateAccentColor('#8B5CF6')" style="background: #8B5CF6; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;" title="Púrpura VIP"></div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="settings-font">Fuentes Tips (Tipografía)</label>
+                        <select id="settings-font" onchange="app.updateFont(this.value)"
+                            style="padding: 1rem; border-radius: 8px; border: 1px solid var(--border-light); font-size: 1rem; background: var(--bg-secondary); color: var(--text-main); font-family: inherit;">
+                            <option value="'Outfit', sans-serif">Outfit (Moderno)</option>
+                            <option value="'Inter', sans-serif">Inter (Legible)</option>
+                            <option value="'Roboto', sans-serif">Roboto (Estándar)</option>
                         </select>
                     </div>
 
@@ -1123,7 +1144,7 @@
                         <label for="settings-text-size">Tamaño del Texto Web</label>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <span style="font-size: 0.8rem;">A</span>
-                            <input type="range" id="settings-text-size" min="12" max="24" value="16" step="1"
+                            <input type="range" id="settings-text-size" min="12" max="22" value="16" step="1"
                                 oninput="app.changeTextSize(this.value)" style="flex-grow: 1;">
                             <span style="font-size: 1.2rem;">A</span>
                         </div>
@@ -1131,14 +1152,14 @@
                             style="text-align: right; font-size: 0.85rem; color: var(--text-muted);">16px</span>
                     </div>
 
-                    <div class="input-group">
-                        <label for="settings-volume">Volumen Predeterminado de Videos</label>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <i class="fa-solid fa-volume-low"></i>
-                            <input type="range" id="settings-volume" min="0" max="1" value="0.5" step="0.1"
-                                onchange="app.changeGlobalVolume(this.value)" style="flex-grow: 1;">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </div>
+                    <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                        <label for="settings-performance">Modo de Alto Rendimiento</label>
+                        <input type="checkbox" id="settings-performance" onchange="app.togglePerformance(this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                    </div>
+
+                    <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                        <label for="settings-data-saver">Ahorro de Datos (Baja Calidad)</label>
+                        <input type="checkbox" id="settings-data-saver" onchange="app.toggleDataSaver(this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                     </div>
 
                 </div>
