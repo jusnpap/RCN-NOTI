@@ -1572,6 +1572,68 @@ document.addEventListener('DOMContentLoaded', () => {
                     banner.style.backgroundImage = `url(${data.imgData})`;
                 }
             }
+        },
+
+        initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = Math.random() * 3 + 1;
+                    this.speedX = (Math.random() - 0.5) * 2;
+                    this.speedY = (Math.random() - 0.5) * 2;
+                    this.color = `rgba(255, 59, 63, ${Math.random() * 0.5 + 0.3})`;
+                    this.life = 1;
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    this.life -= 0.01;
+                    if (this.size > 0.1) this.size -= 0.02;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.life;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#FF3B3F';
+                }
+            }
+
+            const handleMouseMove = (e) => {
+                for (let i = 0; i < 3; i++) {
+                    particles.push(new Particle(e.clientX, e.clientY));
+                }
+            };
+            window.addEventListener('mousemove', handleMouseMove);
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].life <= 0) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+                requestAnimationFrame(animate);
+            };
+            animate();
         }
     };
 
@@ -1600,6 +1662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     app.applySavedBanner();
     app.applySavedAnnouncements();
+    app.initParticles();
 
     // Apply Settings
     const savedTheme = localStorage.getItem('rcn_theme');

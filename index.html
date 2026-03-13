@@ -21,11 +21,11 @@
         <div class="nav-left">
             <i class="fa-regular fa-user logo-icon" id="nav-login-btn" onclick="app.showLoginModal()"
                 style="cursor: pointer;" title="Iniciar sesión"></i>
-            <span class="logo-text" onclick="app.navigateTo('grid')" style="cursor: pointer;"
-                title="Ir al inicio">RCN</span>
-        </div>
-        <div class="nav-center">
-            <span class="domain-text">www.rcn-noticias.com</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="assets/logo.png" alt="RCN Logo" id="site-logo" style="height: 45px; width: auto; filter: drop-shadow(0 0 8px rgba(255,59,63,0.3));">
+                <span class="logo-text" onclick="app.navigateTo('grid')" style="cursor: pointer;"
+                    title="Ir al inicio">RCN</span>
+            </div>
         </div>
         <div class="nav-right" style="display: flex; align-items: center; gap: 15px;">
             <i class="fa-solid fa-envelope" onclick="app.navigateTo('contact')"
@@ -74,11 +74,15 @@
             </div>
 
             <!-- Anuncio Prueba (Banner) -->
-            <div id="main-banner" class="anuncio-prueba-banner"
-                style="background-color: #EF4444; color: white; text-align: center; padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; box-shadow: var(--shadow-md); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; background-size: cover; background-position: center;">
-                <h2 id="main-banner-text"
-                    style="font-size: 4.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
-                    Anuncio Prueba</h2>
+            <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 3rem;">
+                <div id="main-banner" class="anuncio-prueba-banner"
+                    style="background-color: #EF4444; color: white; text-align: center; padding: 4rem 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; background-size: cover; background-position: center; min-height: 500px; width: 100%; max-width: 1000px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                    <!-- Overlay for better text readability -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)); border-radius: var(--radius-lg); z-index: 1;"></div>
+                    <h2 id="main-banner-text"
+                        style="font-size: clamp(2rem, 8vw, 5.5rem); font-weight: 900; margin: 0; letter-spacing: -2px; text-shadow: 4px 4px 20px rgba(0,0,0,0.8); position: relative; z-index: 2; text-transform: uppercase; line-height: 1.1;">
+                        Anuncio Prueba</h2>
+                </div>
             </div>
 
             <div class="grid-container">
@@ -1225,6 +1229,7 @@
 
     </main>
 
+    <canvas id="particle-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
