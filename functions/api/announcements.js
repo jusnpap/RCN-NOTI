@@ -1,7 +1,7 @@
 export async function onRequestGet(context) {
     try {
         const deleted = await context.env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
-        const banner = await context.env.KV_NOTICIAS.get('rcn_banner', { type: 'json' });
+        const banner = await context.env.KV_NOTICIAS.get('rcn_saved_banner', { type: 'json' });
 
         // Fetch all individual card edits in parallel
         const cardList = await context.env.KV_NOTICIAS.list({ prefix: 'card:' });
@@ -88,15 +88,14 @@ export async function onRequestPost(context) {
             return new Response(JSON.stringify({ success: true, message: 'Anuncio eliminado' }), { status: 200 });
         }
 
-        // 4. Edit Banner
         if (data.action === 'edit_banner') {
-            const existing = await context.env.KV_NOTICIAS.get('rcn_banner', { type: 'json' }) || {};
+            const existing = await context.env.KV_NOTICIAS.get('rcn_saved_banner', { type: 'json' }) || {};
             const bannerData = {
                 text: data.text || existing.text,
                 bg: data.bg || existing.bg,
                 imgData: data.imgData || existing.imgData
             };
-            await context.env.KV_NOTICIAS.put('rcn_banner', JSON.stringify(bannerData));
+            await context.env.KV_NOTICIAS.put('rcn_saved_banner', JSON.stringify(bannerData));
             return new Response(JSON.stringify({ success: true, message: 'Banner actualizado' }), { status: 200 });
         }
 
