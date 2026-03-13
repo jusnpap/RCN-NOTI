@@ -110,3 +110,7 @@ body.dark-mode {
 .dark-mode div[style*="background: #f8fafc"] h3 {
     color: var(--text-main) !important;
 }
+
+.dark-mode input[type="file"] {
+    color: var(--text-muted);
+}

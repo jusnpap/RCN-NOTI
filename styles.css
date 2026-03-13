@@ -910,7 +910,14 @@ a.video-card {
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.dropdown-avatar:hover {
+    transform: scale(1.05);
+    border-color: var(--accent-color);
 }
 
 .dropdown-user-info {
@@ -1276,4 +1283,37 @@ a.video-card {
         margin: 1cm;
         size: auto;
     }
+}
+
+/* Custom Profile Upload Styling */
+input[type="file"] {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 10px 0;
+}
+
+input[type="file"]::file-selector-button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    margin-right: 15px;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+#profile-avatar {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#profile-avatar:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }

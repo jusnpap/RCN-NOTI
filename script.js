@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlanId: 0,
         role: 'USER',
         adminModeActive: false,
+        currentAvatar: null,
         pendingView: null,
 
         updateUserBadge() {
@@ -48,7 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (premiumSection) premiumSection.style.display = 'none';
             }
 
-            document.getElementById('display-username').innerHTML = `<i class="fa-regular fa-user" style="margin-right: 5px;"></i> ${this.currentUser}${badgeHtml}`;
+            const userIcon = this.currentAvatar 
+                ? `<img src="${this.currentAvatar}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; vertical-align: middle; object-fit: cover; border: 1px solid var(--border-light);">`
+                : '<i class="fa-regular fa-user" style="margin-right: 5px;"></i>';
+
+            document.getElementById('display-username').innerHTML = `${userIcon} ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
 
             // Actualizar credencial de perfil
@@ -395,8 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         downloadPDF(container) {
-            const titleEl = container.querySelector('.video-brand');
-            const descEl = container.querySelector('.video-description');
+            const titleEl = container.querySelector('.news-summary-title') || container.querySelector('.video-brand') || document.querySelector('.video-brand');
+            const descEl = container.querySelector('.video-description p') || container.querySelector('.video-description') || document.querySelector('.video-description');
 
             if (!titleEl || !descEl || !window.jspdf) {
                 alert('No se pudo encontrar el contenido para descargar o la librería PDF no cargó.');
@@ -408,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let originalHTML = '';
             if (btn) {
                 originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF Premium...';
                 btn.disabled = true;
             }
 
@@ -422,36 +427,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         format: 'a4'
                     });
 
+                    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#FF3B3F';
+                    const rgb = this.hexToRgb(accentColor) || { r: 255, g: 59, b: 63 };
+
                     const margin = 20;
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     const maxLineWidth = pageWidth - margin * 2;
-                    let cursorY = 20;
+                    let cursorY = 0;
 
-                    // Brand Watermark
-                    doc.setTextColor(245, 220, 220); // Very light red
-                    doc.setFontSize(50);
+                    // Header Bar
+                    doc.setFillColor(rgb.r, rgb.g, rgb.b);
+                    doc.rect(0, 0, pageWidth, 40, 'F');
+                    
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(26);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
+                    doc.text('RCN NOTICIAS', margin, 25);
+                    
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('REPORTE PREMIUM EXCLUSIVO', margin, 32);
+
+                    cursorY = 60;
+
+                    // Brand Watermark (Diagonal)
+                    doc.setTextColor(240, 240, 240);
+                    doc.setFontSize(60);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RCN PREMIUM', pageWidth / 2, pageHeight / 2, { angle: 45, align: 'center', opacity: 0.1 });
 
                     // Title
-                    doc.setTextColor(230, 57, 70); // Red
-                    doc.setFontSize(22);
+                    doc.setTextColor(rgb.r, rgb.g, rgb.b);
+                    doc.setFontSize(24);
                     doc.setFont('helvetica', 'bold');
                     const title = titleEl.textContent.trim();
                     const titleLines = doc.splitTextToSize(title, maxLineWidth);
                     doc.text(titleLines, margin, cursorY);
-                    cursorY += (titleLines.length * 10);
+                    cursorY += (titleLines.length * 12);
 
-                    // Separator Line
-                    doc.setDrawColor(230, 57, 70);
-                    doc.setLineWidth(0.5);
-                    doc.line(margin, cursorY - 4, pageWidth - margin, cursorY - 4);
-                    cursorY += 10;
+                    // Underline Title
+                    doc.setDrawColor(rgb.r, rgb.g, rgb.b);
+                    doc.setLineWidth(1);
+                    doc.line(margin, cursorY - 5, pageWidth - margin, cursorY - 5);
+                    cursorY += 15;
 
-                    // Text Content
-                    doc.setTextColor(30, 41, 59); // Dark grey
-                    doc.setFontSize(12);
+                    // Content Body
+                    doc.setTextColor(31, 41, 55); 
+                    doc.setFontSize(11);
                     doc.setFont('helvetica', 'normal');
 
                     const tempDiv = document.createElement('div');
@@ -463,41 +486,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     contentLines.forEach(line => {
                         if (cursorY > pageHeight - 30) {
                             doc.addPage();
-                            cursorY = 20;
-                            // Re-draw watermark on new page
-                            doc.setTextColor(245, 220, 220);
-                            doc.setFontSize(50);
-                            doc.setFont('helvetica', 'bold');
-                            doc.text('RCN PREMIUM', pageWidth / 2, 140, { angle: 45, align: 'center' });
-                            doc.setTextColor(30, 41, 59);
-                            doc.setFontSize(12);
-                            doc.setFont('helvetica', 'normal');
+                            // Header remains on page 1 only for elegance, or we add a small one?
+                            // Let's add a small header on subsequent pages
+                            doc.setFillColor(rgb.r, rgb.g, rgb.b);
+                            doc.rect(0, 0, pageWidth, 15, 'F');
+                            doc.setTextColor(255, 255, 255);
+                            doc.setFontSize(10);
+                            doc.text('RCN NOTICIAS - CONTINUACIÓN', margin, 10);
+                            
+                            cursorY = 30;
+                            // Watermark again
+                            doc.setTextColor(240, 240, 240);
+                            doc.setFontSize(60);
+                            doc.text('RCN PREMIUM', pageWidth / 2, pageHeight / 2, { angle: 45, align: 'center' });
+                            
+                            doc.setTextColor(31, 41, 55);
+                            doc.setFontSize(11);
                         }
                         doc.text(line, margin, cursorY);
-                        cursorY += 7;
+                        cursorY += 7.5; // Better line height
                     });
 
                     // Footer
-                    cursorY += 15;
-                    if (cursorY > pageHeight - 20) {
-                        doc.addPage();
-                        cursorY = 20;
-                    }
-                    doc.setDrawColor(203, 213, 225);
-                    doc.line(margin, cursorY, pageWidth - margin, cursorY);
-                    cursorY += 8;
+                    const dateStr = new Date().toLocaleString();
+                    doc.setFillColor(248, 250, 252);
+                    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+                    doc.setDrawColor(226, 232, 240);
+                    doc.line(0, pageHeight - 20, pageWidth, pageHeight - 20);
 
                     doc.setTextColor(100, 116, 139);
-                    doc.setFontSize(9);
-                    doc.text(`Descargado desde RCN Noticias. Usuario: ${this.currentUser || 'Invitado'}.`, pageWidth / 2, cursorY, { align: 'center' });
-                    doc.text('Todos los derechos reservados.', pageWidth / 2, cursorY + 5, { align: 'center' });
+                    doc.setFontSize(8);
+                    doc.text(`Generado por: ${this.currentUser || 'Usuario RCN'} | Fecha: ${dateStr}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                    doc.text('Este documento es para uso personal del suscriptor. RCN Noticias © 2026', pageWidth / 2, pageHeight - 5, { align: 'center' });
 
-                    const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                    const filename = `RCN_${title.replace(/[^a-z0-9]/gi, '_').substring(0, 30).toLowerCase()}.pdf`;
                     doc.save(filename);
 
                 } catch (err) {
                     console.error('PDF generation error:', err);
-                    alert('Hubo un error al generar el PDF de forma directa.');
+                    alert('Error al generar el PDF. Verifica que el contenido sea válido.');
                 } finally {
                     if (btn) {
                         btn.innerHTML = originalHTML;
@@ -630,8 +657,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
         },
 
+        hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        },
+
         toggleAdminMode() {
             this.adminModeActive = !this.adminModeActive;
+            localStorage.setItem('rcn_admin_mode', this.adminModeActive);
             this.renderAdminControls();
             document.getElementById('user-dropdown').classList.remove('active');
             alert(this.adminModeActive ? 'Modo Administrador activado. Ahora puedes ver los botones de edición en cada anuncio.' : 'Modo Administrador desactivado.');
@@ -720,10 +757,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.currentUser = null;
             this.currentPlanId = 0;
             this.role = 'USER';
+            this.adminModeActive = false;
 
             localStorage.removeItem('rcn_auth_user');
             localStorage.removeItem('rcn_auth_role');
             localStorage.removeItem('rcn_auth_plan');
+            localStorage.removeItem('rcn_admin_mode');
 
             this.updateUserBadge();
             document.getElementById('user-dropdown').classList.remove('active');
@@ -773,27 +812,78 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.classList.add('active');
         },
 
-        saveProfile() {
+        async saveProfile() {
             const newName = document.getElementById('edit-name').value;
             const newEmail = document.getElementById('edit-email').value;
             const newPhone = document.getElementById('edit-phone').value;
+            const avatarInput = document.getElementById('edit-avatar');
+
+            let customAvatar = null;
+            if (avatarInput.files && avatarInput.files[0]) {
+                const file = avatarInput.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 2MB.');
+                    return;
+                }
+                try {
+                    customAvatar = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(file);
+                    });
+                } catch (e) {
+                    console.error('Error reading avatar file', e);
+                }
+            }
 
             if (newName.trim()) {
                 this.currentUser = newName.trim().toUpperCase();
                 document.getElementById('profile-name-title').textContent = this.currentUser;
+                localStorage.setItem('rcn_auth_user', this.currentUser);
                 this.updateUserBadge();
+            }
+
+            const userNameLower = (newName.trim() || this.currentUser).toLowerCase();
+            let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+            
+            if (!registeredUsers[userNameLower]) {
+                registeredUsers[userNameLower] = { planId: this.currentPlanId };
             }
 
             if (newEmail.trim()) {
                 document.getElementById('profile-email').textContent = newEmail.trim().toLowerCase();
+                registeredUsers[userNameLower].email = newEmail.trim().toLowerCase();
             }
-
             if (newPhone.trim()) {
                 document.getElementById('profile-phone').textContent = newPhone.trim();
+                registeredUsers[userNameLower].phone = newPhone.trim();
             }
+            if (customAvatar) {
+                registeredUsers[userNameLower].avatar = customAvatar;
+                this.updateAvatar(customAvatar);
+            }
+
+            localStorage.setItem('rcn_registered_users', JSON.stringify(registeredUsers));
 
             alert('Información de perfil actualizada con éxito.');
             this.closeModal('edit-profile-modal');
+        },
+
+        updateAvatar(url) {
+            this.currentAvatar = url || null;
+            const avatarUrl = url || `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser || 'User')}&background=0D8ABC&color=fff&rounded=true`;
+            
+            if (document.getElementById('dropdown-avatar')) {
+                document.getElementById('dropdown-avatar').src = avatarUrl;
+            }
+            if (document.getElementById('profile-avatar')) {
+                document.getElementById('profile-avatar').src = url ? url : avatarUrl + '&size=120';
+            }
+            
+            if (this.isLoggedIn) {
+                this.updateUserBadge(); // Refresh navbar with new avatar
+            }
         },
 
         openCheckout(planId, planName, price) {
@@ -1019,14 +1109,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.updateUserBadge();
 
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser)}&background=0D8ABC&color=fff&rounded=true`;
-            if (document.getElementById('dropdown-avatar')) {
-                document.getElementById('dropdown-avatar').src = avatarUrl;
-            }
+            this.updateAvatar(registeredUsers[userNameLower]?.avatar);
+
             if (document.getElementById('profile-avatar')) {
-                document.getElementById('profile-avatar').src = avatarUrl + '&size=120';
                 document.getElementById('profile-name-title').textContent = this.currentUser;
-                document.getElementById('profile-email').textContent = `${user.trim().toLowerCase()}@correo.com`;
+                document.getElementById('profile-email').textContent = registeredUsers[userNameLower]?.email || `${user.trim().toLowerCase()}@correo.com`;
+                document.getElementById('profile-phone').textContent = registeredUsers[userNameLower]?.phone || 'Sin registrar';
             }
 
             this.closeLoginModal();
@@ -1398,6 +1486,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+            if (this.role === 'ADMIN' && this.adminModeActive) {
+                this.renderAdminControls();
+            }
         },
 
         startPreview(element) {
@@ -1758,9 +1849,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // incluso si el localStorage viejo no lo tenía.
         if (app.role === 'ADMIN') {
             app.currentPlanId = 2;
+            app.adminModeActive = localStorage.getItem('rcn_admin_mode') === 'true';
         }
 
+        // Restore custom avatar if exists
+        const userNameLower = app.currentUser.toLowerCase();
+        let registeredUsers = JSON.parse(localStorage.getItem('rcn_registered_users') || '{}');
+        app.currentAvatar = registeredUsers[userNameLower]?.avatar || null;
+
         app.updateUserBadge();
+        app.updateAvatar(app.currentAvatar);
+    } else {
+        app.updateAvatar(); // Default for guest
     }
 
     app.applySavedBanner();
@@ -1927,6 +2027,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const phoneEl = document.getElementById('profile-phone');
             if (emailEl) emailEl.textContent = userData.email || `${userNameLower}@correo.com`;
             if (phoneEl) phoneEl.textContent = userData.phone || 'Sin registrar';
+            if (userData.avatar) app.updateAvatar(userData.avatar);
         }
     }
 });

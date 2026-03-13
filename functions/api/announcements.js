@@ -27,7 +27,8 @@ export async function onRequestPost(context) {
                 title: data.title,
                 desc: data.desc,
                 badgeTxt: data.badgeTxt,
-                imgUrl: data.imgUrl
+                imgUrl: data.imgUrl,
+                videoUrl: data.videoUrl
             };
             await context.env.KV_NOTICIAS.put('edited_announcements', JSON.stringify(edited));
             return new Response(JSON.stringify({ success: true, message: 'Anuncio editado' }), { status: 200 });
@@ -37,7 +38,8 @@ export async function onRequestPost(context) {
             let editedFull = await context.env.KV_NOTICIAS.get('edited_full_articles', { type: 'json' }) || {};
             editedFull[data.id] = {
                 title: data.title,
-                content: data.content
+                content: data.content,
+                videoUrl: data.videoUrl
             };
             await context.env.KV_NOTICIAS.put('edited_full_articles', JSON.stringify(editedFull));
             return new Response(JSON.stringify({ success: true, message: 'Artículo completo editado' }), { status: 200 });
