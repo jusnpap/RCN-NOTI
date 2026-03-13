@@ -3,23 +3,25 @@ export async function onRequestGet(context) {
         const deleted = await context.env.KV_NOTICIAS.get('deleted_announcements', { type: 'json' }) || [];
         const banner = await context.env.KV_NOTICIAS.get('rcn_banner', { type: 'json' });
 
-        // Fetch all individual card edits
+        // Fetch all individual card edits in parallel
         const cardList = await context.env.KV_NOTICIAS.list({ prefix: 'card:' });
         const edited = {};
-        for (const key of cardList.keys) {
+        const cardPromises = cardList.keys.map(async (key) => {
             const id = key.name.replace('card:', '');
             const data = await context.env.KV_NOTICIAS.get(key.name, { type: 'json' });
             if (data) edited[id] = data;
-        }
+        });
 
-        // Fetch all individual full article edits
+        // Fetch all individual full article edits in parallel
         const fullList = await context.env.KV_NOTICIAS.list({ prefix: 'full:' });
         const editedFull = {};
-        for (const key of fullList.keys) {
+        const fullPromises = fullList.keys.map(async (key) => {
             const id = key.name.replace('full:', '');
             const data = await context.env.KV_NOTICIAS.get(key.name, { type: 'json' });
             if (data) editedFull[id] = data;
-        }
+        });
+
+        await Promise.all([...cardPromises, ...fullPromises]);
 
         // Also check legacy keys for compatibility during transition
         const legacyEdited = await context.env.KV_NOTICIAS.get('edited_announcements', { type: 'json' }) || {};
@@ -96,6 +98,27 @@ export async function onRequestPost(context) {
             };
             await context.env.KV_NOTICIAS.put('rcn_banner', JSON.stringify(bannerData));
             return new Response(JSON.stringify({ success: true, message: 'Banner actualizado' }), { status: 200 });
+        }
+
+        // 5. Bulk Video Update (Universal Video)
+        if (data.action === 'bulk_video_update') {
+            const { videoUrl, ids } = data;
+            if (!videoUrl || !ids || !Array.isArray(ids)) {
+                return new Response(JSON.stringify({ error: 'Faltan parámetros para actualización masiva' }), { status: 400 });
+            }
+
+            const promises = ids.map(async (id) => {
+                // Update Card
+                const cardExisting = await context.env.KV_NOTICIAS.get(`card:${id}`, { type: 'json' }) || {};
+                await context.env.KV_NOTICIAS.put(`card:${id}`, JSON.stringify({ ...cardExisting, videoUrl }));
+                
+                // Update Full Article
+                const fullExisting = await context.env.KV_NOTICIAS.get(`full:${id}`, { type: 'json' }) || {};
+                await context.env.KV_NOTICIAS.put(`full:${id}`, JSON.stringify({ ...fullExisting, videoUrl }));
+            });
+
+            await Promise.all(promises);
+            return new Response(JSON.stringify({ success: true, message: 'Video aplicado a todas las noticias' }), { status: 200 });
         }
 
         return new Response(JSON.stringify({ error: 'Action not supported' }), { status: 400 });

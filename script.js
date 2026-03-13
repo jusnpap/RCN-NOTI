@@ -132,6 +132,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSettings.parentNode.insertBefore(bannerToggle, btnSettings.nextSibling);
                     }
                 }
+
+                // Add Universal Video toggle
+                let universalToggle = document.getElementById('admin-universal-btn');
+                if (!universalToggle) {
+                    universalToggle = document.createElement('button');
+                    universalToggle.id = 'admin-universal-btn';
+                    universalToggle.className = 'btn-profile';
+                    universalToggle.style.color = '#FF5722';
+                    universalToggle.innerHTML = '<i class="fa-solid fa-film"></i> VIDEO UNIVERSAL';
+                    universalToggle.onclick = () => {
+                        this.openUniversalVideoModal();
+                        document.getElementById('user-dropdown').classList.remove('active');
+                    };
+                    const btnSettings = document.querySelector('.btn-profile i.fa-gear').parentNode;
+                    if (btnSettings) {
+                        btnSettings.parentNode.insertBefore(universalToggle, btnSettings.nextSibling);
+                    }
+                }
             } else {
                 if (adminToggle) adminToggle.remove();
                 this.adminModeActive = false;
@@ -141,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let bannerToggle = document.getElementById('admin-banner-btn');
                 if (bannerToggle) bannerToggle.remove();
+
+                let universalToggle = document.getElementById('admin-universal-btn');
+                if (universalToggle) universalToggle.remove();
             }
 
             this.renderAdminControls();
@@ -1422,22 +1443,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        async applySavedAnnouncements() {
+        async applySavedAnnouncements(skipFetch = false) {
             try {
-                // First try to fetch from Cloudflare KV database
-                const response = await fetch('/api/announcements');
-                if (response.ok) {
-                    const data = await response.json();
+                if (!skipFetch) {
+                    // First try to fetch from Cloudflare KV database
+                    const response = await fetch('/api/announcements');
+                    if (response.ok) {
+                        const data = await response.json();
 
-                    // Sync locally so there's always a backup
-                    if (data.deleted && data.deleted.length > 0) {
-                        localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
-                    }
-                    if (data.edited && Object.keys(data.edited).length > 0) {
-                        localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
-                    }
-                    if (data.editedFull && Object.keys(data.editedFull).length > 0) {
-                        localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                        // Sync locally so there's always a backup
+                        if (data.deleted && data.deleted.length > 0) {
+                            localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
+                        }
+                        if (data.edited && Object.keys(data.edited).length > 0) {
+                            localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
+                        }
+                        if (data.editedFull && Object.keys(data.editedFull).length > 0) {
+                            localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                        }
                     }
                 }
             } catch (error) {
@@ -1557,6 +1580,122 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (this.role === 'ADMIN' && this.adminModeActive) {
                 this.renderAdminControls();
+            }
+        },
+
+        openUniversalVideoModal() {
+            const modal = document.getElementById('universal-video-modal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('active');
+        },
+
+        async applyUniversalVideo() {
+            const videoInput = document.getElementById('universal-video-file');
+            const btn = document.getElementById('btn-apply-universal');
+            const originalBtnHtml = btn.innerHTML;
+
+            if (!videoInput.files || !videoInput.files[0]) {
+                alert("Por favor selecciona un video.");
+                return;
+            }
+
+            const file = videoInput.files[0];
+            if (file.size > 20 * 1024 * 1024) {
+                if (!confirm("El video es un poco pesado (" + (file.size / 1024 / 1024).toFixed(1) + "MB). ¿Deseas intentar subirlo de todos modos?")) {
+                    return;
+                }
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> PROCESANDO ACTUALIZACIÓN MASIVA...';
+            btn.disabled = true;
+
+            try {
+                const videoUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = e => reject(e);
+                    reader.readAsDataURL(file);
+                });
+
+                // IDs of non-premium news (standard news)
+                const ids = ['video-1', 'video-2', 'video-3', 'video-4', 'video-5', 'video-6', 'video-7'];
+
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'bulk_video_update', videoUrl, ids })
+                });
+
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡TODOS LOS VIDEOS ACTUALIZADOS!';
+                    btn.style.background = '#10B981';
+                    
+                    // Update locally to avoid waiting for refresh
+                    let edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
+                    let editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
+                    
+                    ids.forEach(id => {
+                        if (!edited[id]) edited[id] = { title: '', desc: '', badgeTxt: '', imgUrl: '' };
+                        edited[id].videoUrl = videoUrl;
+                        
+                        if (!editedFull[id]) editedFull[id] = { title: '', content: '' };
+                        editedFull[id].videoUrl = videoUrl;
+                    });
+                    
+                    localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
+                    localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
+
+                    setTimeout(() => {
+                        this.closeModal('universal-video-modal');
+                        btn.innerHTML = originalBtnHtml;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                        videoInput.value = '';
+                        // Reload data to reflect changes
+                        this.applySavedAnnouncements();
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Fallo en la actualización masiva');
+                }
+            } catch (err) {
+                console.error('Error in bulk update:', err);
+                alert('Error al aplicar video universal: ' + err.message);
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+            }
+        },
+
+        async syncFromCloud() {
+            try {
+                const response = await fetch('/api/announcements');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.banner) {
+                        localStorage.setItem('rcn_saved_banner', JSON.stringify(data.banner));
+                        this.renderBannerUI(data.banner);
+                    }
+                    
+                    if (data.deleted) {
+                        localStorage.setItem('rcn_deleted_announcements', JSON.stringify(data.deleted));
+                    }
+                    
+                    if (data.edited) {
+                        localStorage.setItem('rcn_edited_announcements', JSON.stringify(data.edited));
+                    }
+                    
+                    if (data.editedFull) {
+                        localStorage.setItem('rcn_edited_full_articles', JSON.stringify(data.editedFull));
+                    }
+                    
+                    // After saving all to local, run apply once
+                    this.applySavedAnnouncements(true); // pass flag to skip fetch
+                }
+            } catch (error) {
+                console.warn('Sync from cloud failed, using offline data', error);
+                this.applySavedAnnouncements(true);
             }
         },
 
@@ -1844,17 +1983,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
-        applySavedBanner() {
+        applySavedBanner(skipFetch = false) {
             let bannerData = JSON.parse(localStorage.getItem('rcn_saved_banner'));
             
-            // Try to load from KV via announcements API if it's there
-            fetch('/api/announcements').then(res => res.json()).then(data => {
-                if (data.banner) {
-                    bannerData = data.banner;
-                    localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
-                    this.renderBannerUI(bannerData);
-                }
-            }).catch(() => {});
+            if (!skipFetch) {
+                // Try to load from KV via announcements API if it's there
+                fetch('/api/announcements').then(res => res.json()).then(data => {
+                    if (data.banner) {
+                        bannerData = data.banner;
+                        localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
+                        this.renderBannerUI(bannerData);
+                    }
+                }).catch(() => {});
+            }
 
             if (bannerData) {
                 this.renderBannerUI(bannerData);
@@ -1968,8 +2109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         app.updateAvatar(); // Default for guest
     }
 
-    app.applySavedBanner();
-    app.applySavedAnnouncements();
+    // Unified synchronization from cloud
+    app.syncFromCloud();
     app.initParticles();
 
     // Apply Settings

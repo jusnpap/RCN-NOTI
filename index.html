@@ -1103,6 +1103,33 @@
             </div>
         </div>
 
+        <!-- Universal Video Modal -->
+        <div id="universal-video-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Aplicar Video Universal</h3>
+                    <button class="close-btn" onclick="app.closeModal('universal-video-modal')"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="margin-bottom: 1.5rem; background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--accent-orange);">
+                    <p style="font-size: 0.9rem; color: var(--text-main); margin: 0;">
+                        <i class="fa-solid fa-circle-info"></i> Esta acción aplicará el mismo video a <strong>todas</strong> las noticias comunes (video-1 a video-7). Los artículos VIP no se verán afectados.
+                    </p>
+                </div>
+                <form onsubmit="event.preventDefault(); app.applyUniversalVideo();">
+                    <div class="input-group" style="margin-bottom: 1.5rem;">
+                        <label for="universal-video-file">Seleccionar Video</label>
+                        <input type="file" id="universal-video-file" accept="video/mp4,video/webm" required
+                            style="padding: 0.8rem;">
+                        <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+                            Límite recomendado: 18MB para asegurar la sincronización en la nube.
+                        </small>
+                    </div>
+                    <button id="btn-apply-universal" type="submit" class="btn-primary" style="width: 100%; background: var(--accent-orange);">APLICAR A TODAS LAS NOTICIAS</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Modal: Configuración -->
         <div class="modal-overlay" id="settings-modal" onclick="if(event.target === this) app.closeSettingsModal()">
             <div class="modal-content" style="max-width: 500px;">
