@@ -340,6 +340,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.style.background = '';
                         btn.disabled = false;
                         videoInput.value = ''; // Reset input
+                        // Render immediately with full memory data
+                        this.applySavedAnnouncements(true, { editedFull });
                     }, 1500);
                 } else {
                     const errorData = await response.json();
@@ -1430,6 +1432,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.style.background = '';
                         btn.disabled = false;
                         videoInput.value = '';
+                        // Render immediately with full memory data
+                        this.applySavedAnnouncements(true, { edited });
                     }, 1500);
                 } else {
                     const errorData = await response.json();
@@ -1443,32 +1447,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        async applySavedAnnouncements(skipFetch = false) {
+        async applySavedAnnouncements(skipFetch = false, explicitData = null) {
+            let cloudData = explicitData;
             try {
-                if (!skipFetch) {
-                    // First try to fetch from Cloudflare KV database
+                if (!cloudData && !skipFetch) {
                     const response = await fetch('/api/announcements');
                     if (response.ok) {
-                        const data = await response.json();
-
-                        // Sync locally so there's always a backup
-                        if (data.deleted && data.deleted.length > 0) {
-                            this.safeSetItem('rcn_deleted_announcements', data.deleted);
-                        }
-                        if (data.edited && Object.keys(data.edited).length > 0) {
-                            this.safeSetItem('rcn_edited_announcements', data.edited);
-                        }
-                        if (data.editedFull && Object.keys(data.editedFull).length > 0) {
-                            this.safeSetItem('rcn_edited_full_articles', data.editedFull);
-                        }
+                        cloudData = await response.json();
                     }
                 }
+
+                if (cloudData) {
+                    if (cloudData.deleted) this.safeSetItem('rcn_deleted_announcements', cloudData.deleted);
+                    if (cloudData.edited) this.safeSetItem('rcn_edited_announcements', cloudData.edited);
+                    if (cloudData.editedFull) this.safeSetItem('rcn_edited_full_articles', cloudData.editedFull);
+                }
             } catch (error) {
-                console.warn('Could not fetch from Cloudflare KV, falling back to local storage', error);
+                console.warn('Sync attempt failed', error);
             }
 
-            // Apply from Local Storage (which now has KV data if fetch succeeded)
-            const deletedIds = JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
+            const deletedIds = cloudData?.deleted || JSON.parse(localStorage.getItem('rcn_deleted_announcements') || '[]');
             deletedIds.forEach(id => {
                 const card = document.querySelector(`.video-card[data-id="${id}"]`);
                 if (card) {
@@ -1476,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            const edited = JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
+            const edited = cloudData?.edited || JSON.parse(localStorage.getItem('rcn_edited_announcements') || '{}');
             for (const [id, data] of Object.entries(edited)) {
                 const card = document.querySelector(`.video-card[data-id="${id}"]`);
                 if (card) {
@@ -1493,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    if (data.videoUrl && data.videoUrl.trim().length > 0) {
+                    if (data.videoUrl && data.videoUrl.trim().length > 0 && data.videoUrl !== "[BLOB_TOO_LARGE_FOR_CACHE]") {
                         const thumbContainer = card.querySelector('.video-thumbnail');
                         if (thumbContainer) {
                             const oldImg = thumbContainer.querySelector('img');
@@ -1523,7 +1521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             videoEl.appendChild(source);
                             videoEl.load();
                         }
-                    } else if (data.imgUrl && data.imgUrl.trim().length > 0) {
+                    } else if (data.imgUrl && data.imgUrl.trim().length > 0 && data.imgUrl !== "[BLOB_TOO_LARGE_FOR_CACHE]") {
                         const thumbContainer = card.querySelector('.video-thumbnail');
                         if (thumbContainer) {
                             const oldVideo = thumbContainer.querySelector('video');
@@ -1545,15 +1543,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Apply Full Articles from Local Storage
-            const editedFull = JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
+            // Apply Full Articles
+            const editedFull = cloudData?.editedFull || JSON.parse(localStorage.getItem('rcn_edited_full_articles') || '{}');
             for (const [id, data] of Object.entries(editedFull)) {
                 const section = document.getElementById(`view-${id}`);
                 if (section) {
                     if (section.querySelector('.video-brand')) section.querySelector('.video-brand').textContent = data.title;
                     if (section.querySelector('.video-description')) section.querySelector('.video-description').innerHTML = data.content;
 
-                    if (data.videoUrl && data.videoUrl.trim().length > 0) {
+                    if (data.videoUrl && data.videoUrl.trim().length > 0 && data.videoUrl !== "[BLOB_TOO_LARGE_FOR_CACHE]") {
                         const playerContainer = section.querySelector('.main-video-player');
                         if (playerContainer) {
                             let videoEl = playerContainer.querySelector('video');
@@ -1653,8 +1651,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.style.background = '';
                         btn.disabled = false;
                         videoInput.value = '';
-                        // Reload data to reflect changes
-                        this.applySavedAnnouncements();
+                        // Reload data to reflect changes immediately with full memory data
+                        this.applySavedAnnouncements(true, { edited, editedFull });
                     }, 2000);
                 } else {
                     const errorData = await response.json();
@@ -1679,20 +1677,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.renderBannerUI(data.banner);
                     }
                     
-                    if (data.deleted) {
-                        this.safeSetItem('rcn_deleted_announcements', data.deleted);
-                    }
-                    
-                    if (data.edited) {
-                        this.safeSetItem('rcn_edited_announcements', data.edited);
-                    }
-                    
-                    if (data.editedFull) {
-                        this.safeSetItem('rcn_edited_full_articles', data.editedFull);
-                    }
-                    
-                    // After saving all to local, run apply once
-                    this.applySavedAnnouncements(true); // pass flag to skip fetch
+                    // Call apply with the full Fresh data object
+                    this.applySavedAnnouncements(true, data); 
                 }
             } catch (error) {
                 console.warn('Sync from cloud failed, using offline data', error);
