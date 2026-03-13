@@ -227,16 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const newTitle = document.getElementById('full-edit-title').value;
             const newContent = document.getElementById('full-edit-content').value;
             const videoInput = document.getElementById('full-edit-video');
+            const btn = document.querySelector('#edit-full-article-modal .btn-primary');
+            const originalBtnHtml = btn.innerHTML;
 
             let videoUrl = '';
 
             if (videoInput && videoInput.files && videoInput.files[0]) {
                 const file = videoInput.files[0];
-                // Increase limit to ~50MB or inform about R2 if possible
-                // For now just allow larger files up to 50MB (KV limit is 25, but user wants more)
-                // We'll warn if it exceeds 25MB but let the user try if they have R2 logic (which we'll add)
                 if (file.size > 100 * 1024 * 1024) {
-                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB (Requiere R2).");
+                    alert("El archivo de video es demasiado grande. Límite máximo aumentado a 100MB.");
                     return;
                 }
 
@@ -253,6 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
+
+            // UI Feedback
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> SINCRONIZANDO NUBE...';
+            btn.disabled = true;
 
             const section = document.getElementById(`view-${id}`);
             if (section) {
@@ -289,15 +292,33 @@ document.addEventListener('DOMContentLoaded', () => {
             editedFull[id] = { title: newTitle, content: newContent, videoUrl: videoUrl };
             localStorage.setItem('rcn_edited_full_articles', JSON.stringify(editedFull));
 
-            // Cloudflare KV Sync (Will handle gracefully if endpoint doesn't support it yet)
-            fetch('/api/announcements', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent, videoUrl: videoUrl })
-            }).catch(err => console.error('Error syncing full article to Cloudflare KV:', err));
+            // Cloudflare KV Sync
+            try {
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'edit_full', id, title: newTitle, content: newContent, videoUrl: videoUrl })
+                });
 
-            this.closeModal('edit-full-article-modal');
-            alert("Artículo modificado exitosamente.");
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡ARTÍCULO ACTUALIZADO!';
+                    btn.style.background = '#10B981';
+                    setTimeout(() => {
+                        this.closeModal('edit-full-article-modal');
+                        btn.innerHTML = originalBtnHtml;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 1500);
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (err) {
+                console.error('Error syncing full article to Cloudflare KV:', err);
+                alert('Guardado localmente, pero falló la sincronización con la nube (posiblemente por tamaño de video).');
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                this.closeModal('edit-full-article-modal');
+            }
         },
 
         importTextFromFile(event) {
@@ -1247,6 +1268,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const badgeTxt = document.getElementById('edit-announcement-badge').value;
             const imgUrl = document.getElementById('edit-announcement-img').value;
             const videoInput = document.getElementById('edit-announcement-video');
+            const btn = document.querySelector('#edit-announcement-modal .btn-primary');
+            const originalBtnHtml = btn.innerHTML;
 
             let videoUrl = '';
 
@@ -1270,6 +1293,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
+
+            // UI Feedback
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> SINCRONIZANDO...';
+            btn.disabled = true;
 
             const card = document.querySelector(`.video-card[data-id="${id}"]`);
             if (card) {
@@ -1344,13 +1371,33 @@ document.addEventListener('DOMContentLoaded', () => {
             edited[id] = { title: title, desc: desc, badgeTxt: badgeTxt, imgUrl: imgUrl, videoUrl: videoUrl };
             localStorage.setItem('rcn_edited_announcements', JSON.stringify(edited));
 
-            fetch('/api/announcements', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl, videoUrl })
-            }).catch(err => console.error('Error syncing edit to Cloudflare KV:', err));
+            // Cloudflare KV Sync
+            try {
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'edit', id, title, desc, badgeTxt, imgUrl, videoUrl })
+                });
 
-            this.closeModal('edit-announcement-modal');
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡SUBIDO A LA NUBE!';
+                    btn.style.background = '#10B981';
+                    setTimeout(() => {
+                        this.closeModal('edit-announcement-modal');
+                        btn.innerHTML = originalBtnHtml;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 1500);
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (err) {
+                console.error('Error syncing edit to Cloudflare KV:', err);
+                alert('Guardado localmente, pero falló la sincronización con la nube (posiblemente por tamaño de video/imagen).');
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                this.closeModal('edit-announcement-modal');
+            }
         },
 
         async applySavedAnnouncements() {
@@ -1667,6 +1714,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = document.getElementById('banner-edit-text').value;
             const bg = document.getElementById('banner-edit-bg').value;
             const imgInput = document.getElementById('banner-edit-img');
+            const btn = document.querySelector('#edit-banner-modal .btn-primary');
+            const originalBtnHtml = btn.innerHTML;
             
             let imgData = '';
 
@@ -1680,6 +1729,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
+
+            // UI Feedback
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> SINCRONIZANDO...';
+            btn.disabled = true;
 
             const bannerData = { text, bg, imgData };
 
@@ -1696,14 +1749,32 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('rcn_saved_banner', JSON.stringify(bannerData));
 
             // Sync to Worker
-            fetch('/api/announcements', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'edit_banner', ...bannerData })
-            }).catch(err => console.error('Error syncing banner to KV:', err));
+            try {
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'edit_banner', ...bannerData })
+                });
 
-            this.closeModal('edit-banner-modal');
-            alert('Banner actualizado exitosamente.');
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ¡BANNER ACTUALIZADO!';
+                    btn.style.background = '#10B981';
+                    setTimeout(() => {
+                        this.closeModal('edit-banner-modal');
+                        btn.innerHTML = originalBtnHtml;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 1500);
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (err) {
+                console.error('Error syncing banner to KV:', err);
+                alert('Banner actualizado localmente, pero falló la sincronización con la nube.');
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                this.closeModal('edit-banner-modal');
+            }
         },
 
         resizeImage(file, maxWidth, maxHeight) {
