@@ -385,6 +385,11 @@ a.video-card {
     border-radius: 4px;
 }
 
+.badge-solid {
+    background-color: var(--primary);
+    color: white !important;
+}
+
 .news-summary-title {
     font-size: 1.1rem;
     font-weight: 800;

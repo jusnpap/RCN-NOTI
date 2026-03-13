@@ -2021,7 +2021,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.size = Math.random() * 3 + 1;
                     this.speedX = (Math.random() - 0.5) * 2;
                     this.speedY = (Math.random() - 0.5) * 2;
-                    this.color = `rgba(255, 59, 63, ${Math.random() * 0.5 + 0.3})`;
+                    
+                    // Fetch dynamic accent color from CSS
+                    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#FF3B3F';
+                    const rgb = app.hexToRgb(accentColor) || { r: 255, g: 59, b: 63 };
+                    
+                    this.color = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${Math.random() * 0.5 + 0.3})`;
+                    this.shadowColor = accentColor;
                     this.life = 1;
                 }
                 update() {
@@ -2037,7 +2043,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#FF3B3F';
+                    ctx.shadowColor = this.shadowColor;
                 }
             }
 
