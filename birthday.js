@@ -166,9 +166,9 @@ const BirthdayExperience = {
     phase2() {
         const startTime = Date.now();
         const duration = 12000; // Combined duration for Matrix + Countdown
-        const fontSize = 10;
+        const fontSize = 16; // Slightly larger for better readability
         const columns = Math.floor(this.canvas.width / fontSize);
-        const drops = new Array(columns).fill(1).map(() => Math.random() * -150);
+        const drops = new Array(columns).fill(1).map(() => Math.random() * -100);
         const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!ｦｱｳｴｵｶｷｸｹｺ'.split('');
         
         // Countdown values
@@ -226,10 +226,10 @@ const BirthdayExperience = {
                     this.ctx.fillStyle = this.matrixColor;
                 }
 
-                if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.95) {
+                if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.97) {
                     drops[i] = 0;
                 }
-                drops[i] += (3 + Math.random() * 4);
+                drops[i] += (1.5 + Math.random() * 2); // Slower cascade as requested
             }
             this.ctx.shadowBlur = 0;
             this.animationId = requestAnimationFrame(animateMatrix);
