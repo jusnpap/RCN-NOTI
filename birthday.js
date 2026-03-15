@@ -262,6 +262,137 @@ const BirthdayExperience = {
         // This is handled in phase2 loop now
     },
 
+    drawNeonHeart(h) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        ctx.globalAlpha = h.opacity;
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#FF007F';
+        ctx.fillStyle = '#FF69B4';
+        
+        ctx.beginPath();
+        const s = h.size;
+        ctx.moveTo(0, s / 4);
+        ctx.bezierCurveTo(0, 0, -s, 0, -s, s / 2);
+        ctx.bezierCurveTo(-s, s, 0, s * 1.5, 0, s * 2);
+        ctx.bezierCurveTo(0, s * 1.5, s, s, s, s / 2);
+        ctx.bezierCurveTo(s, 0, 0, 0, 0, s / 4);
+        ctx.fill();
+
+        if (h.hasRing) {
+            ctx.beginPath();
+            ctx.arc(0, s, s * 1.8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#FF69B4';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    },
+
+    drawNeonOrganicFlower(f) {
+        const ctx = this.ctx;
+        ctx.save();
+        
+        const cpX = f.stemControlX;
+        const cpY = f.groundY - f.maxStemLength * 0.5;
+        const t = Math.min(1, f.stemLength / f.maxStemLength);
+        
+        const qx = (1 - t) * (1 - t) * f.x + 2 * (1 - t) * t * cpX + t * t * f.x;
+        const qy = (1 - t) * (1 - t) * f.groundY + 2 * (1 - t) * t * cpY + t * t * f.targetY;
+
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#39FF14';
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#20FF70'; 
+        ctx.lineCap = 'round';
+        ctx.moveTo(f.x, f.groundY);
+        ctx.quadraticCurveTo(cpX, cpY, qx, qy);
+        ctx.stroke();
+
+        f.leaves.forEach(leaf => {
+            const lpT = leaf.pos;
+            if (t > lpT) {
+                const lx = (1 - lpT) * (1 - lpT) * f.x + 2 * (1 - lpT) * lpT * cpX + lpT * lpT * f.x;
+                const ly = (1 - lpT) * (1 - lpT) * f.groundY + 2 * (1 - lpT) * lpT * cpY + lpT * lpT * f.targetY;
+                const leafScale = Math.min(1, (t - lpT) * 5);
+                
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00FF00';
+                this.drawLeaf(lx, ly, leaf.size * leafScale, leaf.side);
+                ctx.restore();
+            }
+        });
+
+        if (f.bloomProgress > 0) {
+            this.drawNeonBloom(qx, qy, f.size * f.bloomProgress, f.petals, f.color, f.rotation);
+        }
+
+        ctx.restore();
+    },
+
+    drawLeaf(x, y, size, side) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(side * Math.PI / 4);
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(side * size, -size, side * size * 1.5, size, 0, 0);
+        ctx.fill();
+        ctx.restore();
+    },
+
+    drawNeonBloom(x, y, radius, numPetals, color, rotation) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = color;
+
+        for (let i = 0; i < numPetals; i++) {
+            ctx.beginPath();
+            ctx.rotate((Math.PI * 2) / numPetals);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.9;
+            
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(
+                -radius * 0.9, -radius * 1.3,
+                radius * 0.9, -radius * 1.3,
+                0, 0
+            );
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.globalAlpha = 0.4;
+            ctx.arc(0, -radius * 0.6, radius * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'white';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFF33'; 
+        ctx.fill();
+
+        ctx.restore();
+    },
+
     // FASE 4: Mensaje Final
     phase4() {
         this.canvas.style.display = 'none';
