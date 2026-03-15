@@ -47,17 +47,42 @@ const BirthdayExperience = {
         this.phase1();
     },
 
-    // FASE 1: Flores Generativas (Refined: Growing from stems)
+    // FASE 1: Flores Generativas (Neon Style with Hearts & Stars)
     phase1() {
         const startTime = Date.now();
-        const duration = 7000;
+        const duration = 10000; // Longer for better appreciation
         const flowers = [];
-        const numFlowers = 12;
+        const numFlowers = 10;
+        const hearts = [];
+        const stars = [];
+
+        // Generate Stars
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: Math.random() * 2,
+                opacity: Math.random()
+            });
+        }
+
+        // Generate Hearts
+        for (let i = 0; i < 15; i++) {
+            hearts.push({
+                x: Math.random() * this.canvas.width,
+                y: this.canvas.height + 50,
+                size: 10 + Math.random() * 15,
+                speed: 0.5 + Math.random() * 1.5,
+                drift: (Math.random() - 0.5) * 1,
+                opacity: 0.2 + Math.random() * 0.5,
+                hasRing: Math.random() > 0.7
+            });
+        }
 
         for (let i = 0; i < numFlowers; i++) {
             const x = 50 + Math.random() * (this.canvas.width - 100);
-            const groundY = this.canvas.height;
-            const targetY = 100 + Math.random() * (this.canvas.height - 300);
+            const groundY = this.canvas.height + 20;
+            const targetY = 150 + Math.random() * (this.canvas.height - 400);
             
             flowers.push({
                 x: x,
@@ -65,16 +90,17 @@ const BirthdayExperience = {
                 targetY: targetY,
                 stemLength: 0,
                 maxStemLength: groundY - targetY,
-                size: 50 + Math.random() * 50,
-                color: this.colors[Math.floor(Math.random() * this.colors.length)],
-                petals: 5 + Math.floor(Math.random() * 5),
-                delay: Math.random() * 3000,
+                size: 60 + Math.random() * 40,
+                color: '#FF00FF', // Neon Magenta
+                petals: 5,
+                delay: Math.random() * 4000,
                 bloomProgress: 0,
-                rotation: Math.random() * Math.PI * 2,
-                stemControlX: x + (Math.random() - 0.5) * 100,
+                rotation: (Math.random() - 0.5) * 0.5,
+                stemControlX: x + (Math.random() - 0.5) * 150,
                 leaves: [
-                    { pos: 0.3 + Math.random() * 0.4, size: 15 + Math.random() * 15, side: Math.random() > 0.5 ? 1 : -1 },
-                    { pos: 0.2 + Math.random() * 0.2, size: 10 + Math.random() * 10, side: Math.random() > 0.5 ? 1 : -1 }
+                    { pos: 0.4, size: 25, side: 1 },
+                    { pos: 0.25, size: 20, side: -1 },
+                    { pos: 0.6, size: 15, side: -1 }
                 ]
             });
         }
@@ -87,24 +113,36 @@ const BirthdayExperience = {
                 return;
             }
 
-            // Draw background with slight trail
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            // Draw deep space background
+            this.ctx.fillStyle = '#050510';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Draw Stars
+            stars.forEach(s => {
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * Math.abs(Math.sin(elapsed / 1000 + s.x))})`;
+                this.ctx.beginPath();
+                this.ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            });
+
+            // Draw Hearts
+            hearts.forEach(h => {
+                h.y -= h.speed;
+                h.x += Math.sin(elapsed / 1000 + h.y / 100) * 0.5;
+                if (h.y < -50) h.y = this.canvas.height + 50;
+                this.drawNeonHeart(h);
+            });
 
             flowers.forEach(f => {
                 if (elapsed > f.delay) {
                     const growthElapsed = elapsed - f.delay;
-                    
-                    // Stem growth (first 2 seconds)
-                    const stemProgress = Math.min(1, growthElapsed / 2000);
+                    const stemProgress = Math.min(1, growthElapsed / 3000);
                     f.stemLength = f.maxStemLength * stemProgress;
 
-                    // Bloom growth (starts after stem is 70% grown)
-                    if (stemProgress > 0.7) {
-                        f.bloomProgress = Math.min(1, (growthElapsed - 1400) / 1500);
+                    if (stemProgress > 0.6) {
+                        f.bloomProgress = Math.min(1, (growthElapsed - 1800) / 2000);
                     }
-
-                    this.drawOrganicFlower(f);
+                    this.drawNeonOrganicFlower(f);
                 }
             });
 
@@ -113,27 +151,55 @@ const BirthdayExperience = {
         animate();
     },
 
-    drawOrganicFlower(f) {
+    drawNeonHeart(h) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        ctx.globalAlpha = h.opacity;
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#FF69B4';
+        ctx.fillStyle = '#FF69B4';
+        
+        ctx.beginPath();
+        const s = h.size;
+        ctx.moveTo(0, s / 4);
+        ctx.bezierCurveTo(0, 0, -s, 0, -s, s / 2);
+        ctx.bezierCurveTo(-s, s, 0, s * 1.5, 0, s * 2);
+        ctx.bezierCurveTo(0, s * 1.5, s, s, s, s / 2);
+        ctx.bezierCurveTo(s, 0, 0, 0, 0, s / 4);
+        ctx.fill();
+
+        if (h.hasRing) {
+            ctx.beginPath();
+            ctx.arc(0, s, s * 2, 0, Math.PI * 2);
+            ctx.strokeStyle = '#FF69B4';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    },
+
+    drawNeonOrganicFlower(f) {
         const ctx = this.ctx;
         ctx.save();
         
-        // Draw Stem
+        // Draw Neon Stem
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00FF41';
         ctx.beginPath();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#2D5A27'; // Dark green for stem
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#20FF70'; 
         ctx.lineCap = 'round';
         
-        const currentY = f.groundY - f.stemLength;
         const cpX = f.stemControlX;
-        const cpY = f.groundY - f.stemLength * 0.5;
-
-        // Quadratic curve for a more organic stem
-        ctx.moveTo(f.x, f.groundY);
-        // Calculate point on curve for partial growth
+        const cpY = f.groundY - f.maxStemLength * 0.5;
         const t = Math.min(1, f.stemLength / f.maxStemLength);
         const qx = (1 - t) * (1 - t) * f.x + 2 * (1 - t) * t * cpX + t * t * f.x;
         const qy = (1 - t) * (1 - t) * f.groundY + 2 * (1 - t) * t * cpY + t * t * f.targetY;
         
+        ctx.moveTo(f.x, f.groundY);
         ctx.quadraticCurveTo(cpX, cpY, qx, qy);
         ctx.stroke();
 
@@ -141,72 +207,71 @@ const BirthdayExperience = {
         f.leaves.forEach(leaf => {
             if (f.stemLength / f.maxStemLength > leaf.pos) {
                 const lpT = leaf.pos;
-                // Position on stem curve
                 const lx = (1 - lpT) * (1 - lpT) * f.x + 2 * (1 - lpT) * lpT * cpX + lpT * lpT * f.x;
                 const ly = (1 - lpT) * (1 - lpT) * f.groundY + 2 * (1 - lpT) * lpT * cpY + lpT * lpT * f.targetY;
+                const leafScale = Math.min(1, (f.stemLength / f.maxStemLength - leaf.pos) * 4);
                 
-                const leafScale = Math.min(1, (f.stemLength / f.maxStemLength - leaf.pos) * 5);
+                ctx.save();
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#00CC00';
                 this.drawLeaf(lx, ly, leaf.size * leafScale, leaf.side);
+                ctx.restore();
             }
         });
 
-        // Draw Bloom at the tip
+        // Draw Bloom
         if (f.bloomProgress > 0) {
-            this.drawBloom(f.x, f.targetY, f.size * f.bloomProgress, f.petals, f.color, f.rotation + f.bloomProgress);
+            this.drawNeonBloom(f.x, f.targetY, f.size * f.bloomProgress, f.petals, f.color, f.rotation);
         }
 
         ctx.restore();
     },
 
-    drawLeaf(x, y, size, side) {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(side * Math.PI / 4);
-        ctx.fillStyle = '#4A7c44';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(side * size, -size, side * size * 1.5, size, 0, 0);
-        ctx.fill();
-        ctx.restore();
-    },
-
-    drawBloom(x, y, radius, numPetals, color, rotation) {
+    drawNeonBloom(x, y, radius, numPetals, color, rotation) {
         const ctx = this.ctx;
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(rotation);
         
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color;
+
         for (let i = 0; i < numPetals; i++) {
             ctx.beginPath();
             ctx.rotate((Math.PI * 2) / numPetals);
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.7;
+            ctx.globalAlpha = 0.8;
             
+            // Rounded petals like in reference
             ctx.moveTo(0, 0);
             ctx.bezierCurveTo(
-                radius * 0.6, -radius * 1.6,
-                radius * 1.6, -radius * 0.6,
+                -radius * 0.8, -radius * 1.2,
+                radius * 0.8, -radius * 1.2,
                 0, 0
             );
             ctx.fill();
             
-            // Petal Highlight
+            // Inner Glow
             ctx.beginPath();
-            ctx.strokeStyle = 'white';
-            ctx.globalAlpha = 0.3;
-            ctx.lineWidth = 1;
-            ctx.moveTo(0, 0);
-            ctx.lineTo(0, -radius);
-            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.arc(0, -radius * 0.5, radius * 0.2, 0, Math.PI * 2);
+            ctx.fill();
         }
 
-        // Center
+        // Radiant Center
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'white';
         ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFACD';
-        ctx.globalAlpha = 1;
+        ctx.arc(0, 0, radius * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
         ctx.fill();
+        
+        // Center Detail
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFF00';
+        ctx.fill();
+
         ctx.restore();
     },
 
