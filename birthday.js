@@ -47,23 +47,35 @@ const BirthdayExperience = {
         this.phase1();
     },
 
-    // FASE 1: Flores Generativas (Style refined to be more organic)
+    // FASE 1: Flores Generativas (Refined: Growing from stems)
     phase1() {
         const startTime = Date.now();
-        const duration = 6000;
+        const duration = 7000;
         const flowers = [];
-        const numFlowers = 15;
+        const numFlowers = 12;
 
         for (let i = 0; i < numFlowers; i++) {
+            const x = 50 + Math.random() * (this.canvas.width - 100);
+            const groundY = this.canvas.height;
+            const targetY = 100 + Math.random() * (this.canvas.height - 300);
+            
             flowers.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                size: 40 + Math.random() * 60,
+                x: x,
+                groundY: groundY,
+                targetY: targetY,
+                stemLength: 0,
+                maxStemLength: groundY - targetY,
+                size: 50 + Math.random() * 50,
                 color: this.colors[Math.floor(Math.random() * this.colors.length)],
-                petals: 5 + Math.floor(Math.random() * 7),
-                delay: Math.random() * 2000,
+                petals: 5 + Math.floor(Math.random() * 5),
+                delay: Math.random() * 3000,
+                bloomProgress: 0,
                 rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.01
+                stemControlX: x + (Math.random() - 0.5) * 100,
+                leaves: [
+                    { pos: 0.3 + Math.random() * 0.4, size: 15 + Math.random() * 15, side: Math.random() > 0.5 ? 1 : -1 },
+                    { pos: 0.2 + Math.random() * 0.2, size: 10 + Math.random() * 10, side: Math.random() > 0.5 ? 1 : -1 }
+                ]
             });
         }
 
@@ -75,14 +87,24 @@ const BirthdayExperience = {
                 return;
             }
 
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            // Draw background with slight trail
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             flowers.forEach(f => {
                 if (elapsed > f.delay) {
-                    const progress = Math.min(1, (elapsed - f.delay) / 3000);
-                    f.rotation += f.rotationSpeed;
-                    this.drawFlower(f.x, f.y, f.size * progress, f.petals, f.color, f.rotation);
+                    const growthElapsed = elapsed - f.delay;
+                    
+                    // Stem growth (first 2 seconds)
+                    const stemProgress = Math.min(1, growthElapsed / 2000);
+                    f.stemLength = f.maxStemLength * stemProgress;
+
+                    // Bloom growth (starts after stem is 70% grown)
+                    if (stemProgress > 0.7) {
+                        f.bloomProgress = Math.min(1, (growthElapsed - 1400) / 1500);
+                    }
+
+                    this.drawOrganicFlower(f);
                 }
             });
 
@@ -91,51 +113,101 @@ const BirthdayExperience = {
         animate();
     },
 
-    drawFlower(x, y, radius, numPetals, color, rotation) {
-        this.ctx.save();
-        this.ctx.translate(x, y);
-        this.ctx.rotate(rotation);
+    drawOrganicFlower(f) {
+        const ctx = this.ctx;
+        ctx.save();
         
-        // Petals
+        // Draw Stem
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#2D5A27'; // Dark green for stem
+        ctx.lineCap = 'round';
+        
+        const currentY = f.groundY - f.stemLength;
+        const cpX = f.stemControlX;
+        const cpY = f.groundY - f.stemLength * 0.5;
+
+        // Quadratic curve for a more organic stem
+        ctx.moveTo(f.x, f.groundY);
+        // Calculate point on curve for partial growth
+        const t = Math.min(1, f.stemLength / f.maxStemLength);
+        const qx = (1 - t) * (1 - t) * f.x + 2 * (1 - t) * t * cpX + t * t * f.x;
+        const qy = (1 - t) * (1 - t) * f.groundY + 2 * (1 - t) * t * cpY + t * t * f.targetY;
+        
+        ctx.quadraticCurveTo(cpX, cpY, qx, qy);
+        ctx.stroke();
+
+        // Draw Leaves
+        f.leaves.forEach(leaf => {
+            if (f.stemLength / f.maxStemLength > leaf.pos) {
+                const lpT = leaf.pos;
+                // Position on stem curve
+                const lx = (1 - lpT) * (1 - lpT) * f.x + 2 * (1 - lpT) * lpT * cpX + lpT * lpT * f.x;
+                const ly = (1 - lpT) * (1 - lpT) * f.groundY + 2 * (1 - lpT) * lpT * cpY + lpT * lpT * f.targetY;
+                
+                const leafScale = Math.min(1, (f.stemLength / f.maxStemLength - leaf.pos) * 5);
+                this.drawLeaf(lx, ly, leaf.size * leafScale, leaf.side);
+            }
+        });
+
+        // Draw Bloom at the tip
+        if (f.bloomProgress > 0) {
+            this.drawBloom(f.x, f.targetY, f.size * f.bloomProgress, f.petals, f.color, f.rotation + f.bloomProgress);
+        }
+
+        ctx.restore();
+    },
+
+    drawLeaf(x, y, size, side) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(side * Math.PI / 4);
+        ctx.fillStyle = '#4A7c44';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(side * size, -size, side * size * 1.5, size, 0, 0);
+        ctx.fill();
+        ctx.restore();
+    },
+
+    drawBloom(x, y, radius, numPetals, color, rotation) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        
         for (let i = 0; i < numPetals; i++) {
-            this.ctx.beginPath();
-            this.ctx.rotate((Math.PI * 2) / numPetals);
-            this.ctx.fillStyle = color;
-            this.ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.rotate((Math.PI * 2) / numPetals);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.7;
             
-            // More organic petal shape
-            this.ctx.moveTo(0, 0);
-            this.ctx.bezierCurveTo(
-                radius * 0.5, -radius * 1.5,
-                radius * 1.5, -radius * 0.5,
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(
+                radius * 0.6, -radius * 1.6,
+                radius * 1.6, -radius * 0.6,
                 0, 0
             );
-            this.ctx.fill();
+            ctx.fill();
             
-            // Inner detail
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = 'white';
-            this.ctx.globalAlpha = 0.2;
-            this.ctx.lineWidth = 2;
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(0, -radius);
-            this.ctx.stroke();
+            // Petal Highlight
+            ctx.beginPath();
+            ctx.strokeStyle = 'white';
+            ctx.globalAlpha = 0.3;
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -radius);
+            ctx.stroke();
         }
 
         // Center
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#FFFACD'; // Lemon Chiffon for center
-        this.ctx.globalAlpha = 1;
-        this.ctx.fill();
-        
-        // Center shadow
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
-        this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-        this.ctx.stroke();
-
-        this.ctx.restore();
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFACD';
+        ctx.globalAlpha = 1;
+        ctx.fill();
+        ctx.restore();
     },
 
     // FASE 2: Lluvia Matrix (Pink style)
