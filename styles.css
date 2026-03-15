@@ -244,6 +244,8 @@ body {
     position: relative;
     overflow: hidden;
     min-height: 500px; /* Default for desktop */
+    width: 100%;
+    max-width: 1000px;
 }
 
 .anuncio-prueba-banner::before {
