@@ -1168,9 +1168,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.closeLoginModal();
 
             // Especial: Experiencia de Cumpleaños para Niko
-            if (mode === 'login' && userNameLower === 'niko_ortiz') {
+            if (userNameLower === 'niko_ortiz') {
+                console.log('Triggering Birthday Experience for Niko...');
                 if (typeof BirthdayExperience !== 'undefined') {
                     BirthdayExperience.start();
+                } else {
+                    console.warn('BirthdayExperience script not loaded yet.');
                 }
             }
 
