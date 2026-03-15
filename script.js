@@ -75,11 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let adminToggle = document.getElementById('admin-toggle-btn');
-            const loginBtn = document.getElementById('nav-login-btn');
-
-            if (loginBtn) {
-                loginBtn.style.display = this.isLoggedIn ? 'none' : 'inline-block';
-            }
 
             if (this.role === 'ADMIN') {
                 if (!adminToggle) {
