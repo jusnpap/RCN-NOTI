@@ -243,6 +243,7 @@ body {
 .anuncio-prueba-banner {
     position: relative;
     overflow: hidden;
+    min-height: 500px; /* Default for desktop */
 }
 
 .anuncio-prueba-banner::before {
@@ -752,9 +753,14 @@ a.video-card {
         display: none !important;
     }
 
-    .nav-center,
-    .username {
+    .nav-center {
         display: none !important;
+    }
+
+    .username {
+        display: inline-block !important; /* Restore for menu access */
+        font-size: 0.85rem;
+        max-width: 100px;
     }
 
     #app-container {
