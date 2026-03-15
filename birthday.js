@@ -295,14 +295,14 @@ const BirthdayExperience = {
         ctx.restore();
     },
 
-    // FASE 2: Lluvia Matrix (Pink style)
+    // FASE 2: Lluvia Matrix (Denser Pink Style)
     phase2() {
         const startTime = Date.now();
-        const duration = 5000;
-        const fontSize = 18;
+        const duration = 6000;
+        const fontSize = 12; // Smaller for more density
         const columns = Math.floor(this.canvas.width / fontSize);
-        const drops = new Array(columns).fill(1);
-        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!'.split('');
+        const drops = new Array(columns).fill(1).map(() => Math.random() * -100); // Random starts
+        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!ｦｱｳｴｵｶｷｸｹｺ'.split('');
 
         const animateMatrix = () => {
             const elapsed = Date.now() - startTime;
@@ -312,24 +312,36 @@ const BirthdayExperience = {
                 return;
             }
 
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            // Dark trail
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.ctx.fillStyle = this.matrixColor;
-            this.ctx.shadowBlur = 10;
+            this.ctx.shadowBlur = 12;
             this.ctx.shadowColor = this.matrixColor;
             this.ctx.font = `bold ${fontSize}px monospace`;
 
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
-                this.ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
 
-                if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.975) {
+                // Main character
+                this.ctx.fillText(text, x, y);
+
+                // Add a "lighter" character just above for extra glow
+                if (Math.random() > 0.5) {
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillText(text, x, y);
+                    this.ctx.fillStyle = this.matrixColor;
+                }
+
+                if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.95) {
                     drops[i] = 0;
                 }
-                drops[i] += (1.5 + Math.random() * 2);
+                drops[i] += (2 + Math.random() * 3); // Faster cascade
             }
-            this.ctx.shadowBlur = 0; // Reset for next frame
+            this.ctx.shadowBlur = 0;
 
             this.animationId = requestAnimationFrame(animateMatrix);
         };
