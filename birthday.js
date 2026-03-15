@@ -165,15 +165,14 @@ const BirthdayExperience = {
     // FASE 2 & 3: Lluvia Matrix Persistente y Contador
     phase2() {
         const startTime = Date.now();
-        const duration = 12000; // Combined duration for Matrix + Countdown
-        const fontSize = 16; // Slightly larger for better readability
+        const fontSize = 16;
         const columns = Math.floor(this.canvas.width / fontSize);
         const drops = new Array(columns).fill(1).map(() => Math.random() * -100);
         const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!ｦｱｳｴｵｶｷｸｹｺ'.split('');
         
-        // Countdown values
         let countdownStarted = false;
-        let countdownValue = 3;
+        this.matrixRunning = true; // Flag to control the loop
+
         const counterDiv = document.createElement('div');
         Object.assign(counterDiv.style, {
             position: 'absolute',
@@ -190,19 +189,20 @@ const BirthdayExperience = {
         this.overlay.appendChild(counterDiv);
 
         const animateMatrix = () => {
+            if (!this.matrixRunning) return;
+
             const elapsed = Date.now() - startTime;
             
-            // Start countdown at 7 seconds into the Matrix effect
-            if (elapsed > 6000 && !countdownStarted) {
+            // Start countdown at 4 seconds into the Matrix effect
+            if (elapsed > 4000 && !countdownStarted) {
                 countdownStarted = true;
-                this.startCountdown(counterDiv);
-            }
-
-            if (elapsed > duration) {
-                cancelAnimationFrame(this.animationId);
-                counterDiv.remove();
-                this.phase4();
-                return;
+                this.startCountdown(counterDiv, () => {
+                    // This callback runs when countdown ends
+                    this.matrixRunning = false;
+                    cancelAnimationFrame(this.animationId);
+                    counterDiv.remove();
+                    this.phase4();
+                });
             }
 
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
@@ -229,7 +229,7 @@ const BirthdayExperience = {
                 if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.97) {
                     drops[i] = 0;
                 }
-                drops[i] += (1.5 + Math.random() * 2); // Slower cascade as requested
+                drops[i] += (1.5 + Math.random() * 2);
             }
             this.ctx.shadowBlur = 0;
             this.animationId = requestAnimationFrame(animateMatrix);
@@ -237,10 +237,13 @@ const BirthdayExperience = {
         animateMatrix();
     },
 
-    startCountdown(div) {
+    startCountdown(div, onComplete) {
         let count = 3;
         const update = () => {
-            if (count === 0) return;
+            if (count === 0) {
+                if (onComplete) onComplete();
+                return;
+            }
             div.textContent = count;
             div.style.opacity = '1';
             div.style.transform = 'scale(1.4)';
@@ -250,7 +253,7 @@ const BirthdayExperience = {
                 div.style.transform = 'scale(0.6)';
                 setTimeout(() => {
                     count--;
-                    if (count > 0) update();
+                    update(); // Go straight to 0 check
                 }, 400);
             }, 600);
         };
