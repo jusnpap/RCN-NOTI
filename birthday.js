@@ -81,7 +81,15 @@ const BirthdayExperience = {
         }
 
         for (let i = 0; i < numFlowers; i++) {
-            const x = 50 + Math.random() * (this.canvas.width - 100);
+            let x;
+            let attempts = 0;
+            let tooClose;
+            do {
+                x = 50 + Math.random() * (this.canvas.width - 100);
+                tooClose = flowers.some(f => Math.abs(f.x - x) < 120);
+                attempts++;
+            } while (tooClose && attempts < 50);
+
             const groundY = this.canvas.height + 50;
             const targetY = 100 + Math.random() * (this.canvas.height - 350);
             
@@ -92,7 +100,7 @@ const BirthdayExperience = {
                 stemLength: 0,
                 maxStemLength: groundY - targetY,
                 size: 50 + Math.random() * 60,
-                color: Math.random() > 0.5 ? '#FF00FF' : '#FF69B4', // Hot Pink / Neon Magenta
+                color: Math.random() > 0.5 ? '#FF00FF' : '#FF69B4',
                 petals: 5 + Math.floor(Math.random() * 3),
                 delay: Math.random() * 5000,
                 bloomProgress: 0,
@@ -115,11 +123,9 @@ const BirthdayExperience = {
                 return;
             }
 
-            // Draw deep space background
             this.ctx.fillStyle = '#050510';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // Draw Stars with twinkle
             stars.forEach(s => {
                 const twinkle = Math.abs(Math.sin(elapsed / 1000 + s.x));
                 this.ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * twinkle})`;
@@ -131,7 +137,6 @@ const BirthdayExperience = {
             });
             this.ctx.shadowBlur = 0;
 
-            // Draw Hearts
             hearts.forEach(h => {
                 h.y -= h.speed;
                 h.x += Math.sin(elapsed / 1000 + h.y / 100) * 0.8;
@@ -157,167 +162,54 @@ const BirthdayExperience = {
         animate();
     },
 
-    drawNeonHeart(h) {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.translate(h.x, h.y);
-        ctx.globalAlpha = h.opacity;
-        
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#FF007F';
-        ctx.fillStyle = '#FF69B4';
-        
-        ctx.beginPath();
-        const s = h.size;
-        ctx.moveTo(0, s / 4);
-        ctx.bezierCurveTo(0, 0, -s, 0, -s, s / 2);
-        ctx.bezierCurveTo(-s, s, 0, s * 1.5, 0, s * 2);
-        ctx.bezierCurveTo(0, s * 1.5, s, s, s, s / 2);
-        ctx.bezierCurveTo(s, 0, 0, 0, 0, s / 4);
-        ctx.fill();
-
-        if (h.hasRing) {
-            ctx.beginPath();
-            ctx.arc(0, s, s * 1.8, 0, Math.PI * 2);
-            ctx.strokeStyle = '#FF69B4';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-        }
-        
-        ctx.restore();
-    },
-
-    drawNeonOrganicFlower(f) {
-        const ctx = this.ctx;
-        ctx.save();
-        
-        // Use quadratic curve for stem growth
-        const cpX = f.stemControlX;
-        const cpY = f.groundY - f.maxStemLength * 0.5;
-        const t = Math.min(1, f.stemLength / f.maxStemLength);
-        
-        const qx = (1 - t) * (1 - t) * f.x + 2 * (1 - t) * t * cpX + t * t * f.x;
-        const qy = (1 - t) * (1 - t) * f.groundY + 2 * (1 - t) * t * cpY + t * t * f.targetY;
-
-        // Draw Neon Stem
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#39FF14'; // Electric Green
-        ctx.beginPath();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#20FF70'; 
-        ctx.lineCap = 'round';
-        ctx.moveTo(f.x, f.groundY);
-        ctx.quadraticCurveTo(cpX, cpY, qx, qy);
-        ctx.stroke();
-
-        // Draw Leaves
-        f.leaves.forEach(leaf => {
-            const lpT = leaf.pos;
-            if (t > lpT) {
-                const lx = (1 - lpT) * (1 - lpT) * f.x + 2 * (1 - lpT) * lpT * cpX + lpT * lpT * f.x;
-                const ly = (1 - lpT) * (1 - lpT) * f.groundY + 2 * (1 - lpT) * lpT * cpY + lpT * lpT * f.targetY;
-                const leafScale = Math.min(1, (t - lpT) * 5);
-                
-                ctx.save();
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#00FF00';
-                this.drawLeaf(lx, ly, leaf.size * leafScale, leaf.side);
-                ctx.restore();
-            }
-        });
-
-        // Draw Bloom at the CURRENT tip
-        if (f.bloomProgress > 0) {
-            this.drawNeonBloom(qx, qy, f.size * f.bloomProgress, f.petals, f.color, f.rotation);
-        }
-
-        ctx.restore();
-    },
-
-    drawLeaf(x, y, size, side) {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(side * Math.PI / 4);
-        ctx.fillStyle = '#228B22'; // Forest Green
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(side * size, -size, side * size * 1.5, size, 0, 0);
-        ctx.fill();
-        ctx.restore();
-    },
-
-    drawNeonBloom(x, y, radius, numPetals, color, rotation) {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rotation);
-        
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = color;
-
-        for (let i = 0; i < numPetals; i++) {
-            ctx.beginPath();
-            ctx.rotate((Math.PI * 2) / numPetals);
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.9;
-            
-            // Neon rounded petals
-            ctx.moveTo(0, 0);
-            ctx.bezierCurveTo(
-                -radius * 0.9, -radius * 1.3,
-                radius * 0.9, -radius * 1.3,
-                0, 0
-            );
-            ctx.fill();
-            
-            // Flower texture glow
-            ctx.beginPath();
-            ctx.fillStyle = 'white';
-            ctx.globalAlpha = 0.4;
-            ctx.arc(0, -radius * 0.6, radius * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Blazing Neon Center
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = 'white';
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFF33'; // Electric Yellow
-        ctx.fill();
-
-        ctx.restore();
-    },
-
-    // FASE 2: Lluvia Matrix (Denser Pink Style)
+    // FASE 2 & 3: Lluvia Matrix Persistente y Contador
     phase2() {
         const startTime = Date.now();
-        const duration = 6000;
-        const fontSize = 12; // Smaller for more density
+        const duration = 12000; // Combined duration for Matrix + Countdown
+        const fontSize = 10;
         const columns = Math.floor(this.canvas.width / fontSize);
-        const drops = new Array(columns).fill(1).map(() => Math.random() * -100); // Random starts
+        const drops = new Array(columns).fill(1).map(() => Math.random() * -150);
         const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!ｦｱｳｴｵｶｷｸｹｺ'.split('');
+        
+        // Countdown values
+        let countdownStarted = false;
+        let countdownValue = 3;
+        const counterDiv = document.createElement('div');
+        Object.assign(counterDiv.style, {
+            position: 'absolute',
+            fontSize: '180px',
+            color: this.matrixColor,
+            fontWeight: '900',
+            textAlign: 'center',
+            textShadow: `0 0 40px ${this.matrixColor}`,
+            transform: 'scale(0.5)',
+            opacity: '0',
+            transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            zIndex: '100'
+        });
+        this.overlay.appendChild(counterDiv);
 
         const animateMatrix = () => {
             const elapsed = Date.now() - startTime;
+            
+            // Start countdown at 7 seconds into the Matrix effect
+            if (elapsed > 6000 && !countdownStarted) {
+                countdownStarted = true;
+                this.startCountdown(counterDiv);
+            }
+
             if (elapsed > duration) {
                 cancelAnimationFrame(this.animationId);
-                this.phase3();
+                counterDiv.remove();
+                this.phase4();
                 return;
             }
 
-            // Dark trail
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.ctx.fillStyle = this.matrixColor;
-            this.ctx.shadowBlur = 12;
+            this.ctx.shadowBlur = 10;
             this.ctx.shadowColor = this.matrixColor;
             this.ctx.font = `bold ${fontSize}px monospace`;
 
@@ -326,11 +218,9 @@ const BirthdayExperience = {
                 const x = i * fontSize;
                 const y = drops[i] * fontSize;
 
-                // Main character
                 this.ctx.fillText(text, x, y);
 
-                // Add a "lighter" character just above for extra glow
-                if (Math.random() > 0.5) {
+                if (Math.random() > 0.6) {
                     this.ctx.fillStyle = 'white';
                     this.ctx.fillText(text, x, y);
                     this.ctx.fillStyle = this.matrixColor;
@@ -339,55 +229,37 @@ const BirthdayExperience = {
                 if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.95) {
                     drops[i] = 0;
                 }
-                drops[i] += (2 + Math.random() * 3); // Faster cascade
+                drops[i] += (3 + Math.random() * 4);
             }
             this.ctx.shadowBlur = 0;
-
             this.animationId = requestAnimationFrame(animateMatrix);
         };
         animateMatrix();
     },
 
-    // FASE 3: Contador Regresivo
-    phase3() {
-        const counterDiv = document.createElement('div');
-        Object.assign(counterDiv.style, {
-            position: 'absolute',
-            fontSize: '150px',
-            color: this.matrixColor,
-            fontWeight: '900',
-            textAlign: 'center',
-            textShadow: `0 0 30px ${this.matrixColor}`,
-            transform: 'scale(0.5)',
-            opacity: '0',
-            transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            zIndex: '100'
-        });
-        this.overlay.appendChild(counterDiv);
-
+    startCountdown(div) {
         let count = 3;
-        const updateCounter = () => {
-            if (count === 0) {
-                counterDiv.remove();
-                this.phase4();
-                return;
-            }
-
-            counterDiv.textContent = count;
-            counterDiv.style.opacity = '1';
-            counterDiv.style.transform = 'scale(1.3)';
+        const update = () => {
+            if (count === 0) return;
+            div.textContent = count;
+            div.style.opacity = '1';
+            div.style.transform = 'scale(1.4)';
             
             setTimeout(() => {
-                counterDiv.style.opacity = '0';
-                counterDiv.style.transform = 'scale(0.5)';
+                div.style.opacity = '0';
+                div.style.transform = 'scale(0.6)';
                 setTimeout(() => {
                     count--;
-                    updateCounter();
+                    if (count > 0) update();
                 }, 400);
             }, 600);
         };
+        update();
+    },
 
-        updateCounter();
+    // Simplified phase3 as it's merged into phase2
+    phase3() {
+        // This is handled in phase2 loop now
     },
 
     // FASE 4: Mensaje Final
