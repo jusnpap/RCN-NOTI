@@ -7,8 +7,8 @@ const BirthdayExperience = {
     canvas: null,
     ctx: null,
     animationId: null,
-    colors: ['#FF69B4', '#FF1744', '#FFD600', '#E040FB'],
-    matrixColor: '#00FF41',
+    colors: ['#FF69B4', '#FF1493', '#C71585', '#DB7093', '#FFB6C1'], // Pink palette
+    matrixColor: '#FF69B4', // Hot Pink for Matrix
 
     start() {
         // Create Overlay
@@ -47,22 +47,23 @@ const BirthdayExperience = {
         this.phase1();
     },
 
-    // FASE 1: Flores Generativas
+    // FASE 1: Flores Generativas (Style refined to be more organic)
     phase1() {
         const startTime = Date.now();
-        const duration = 4000;
+        const duration = 6000;
         const flowers = [];
-        const numFlowers = 12;
+        const numFlowers = 15;
 
         for (let i = 0; i < numFlowers; i++) {
             flowers.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: 30 + Math.random() * 50,
+                size: 40 + Math.random() * 60,
                 color: this.colors[Math.floor(Math.random() * this.colors.length)],
-                petals: 5 + Math.floor(Math.random() * 5),
-                delay: Math.random() * 1000,
-                speed: 0.02 + Math.random() * 0.02
+                petals: 5 + Math.floor(Math.random() * 7),
+                delay: Math.random() * 2000,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.01
             });
         }
 
@@ -74,13 +75,14 @@ const BirthdayExperience = {
                 return;
             }
 
-            this.ctx.fillStyle = 'black';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             flowers.forEach(f => {
                 if (elapsed > f.delay) {
-                    const progress = Math.min(1, (elapsed - f.delay) / 2000);
-                    this.drawFlower(f.x, f.y, f.size * progress, f.petals, f.color);
+                    const progress = Math.min(1, (elapsed - f.delay) / 3000);
+                    f.rotation += f.rotationSpeed;
+                    this.drawFlower(f.x, f.y, f.size * progress, f.petals, f.color, f.rotation);
                 }
             });
 
@@ -89,36 +91,61 @@ const BirthdayExperience = {
         animate();
     },
 
-    drawFlower(x, y, radius, numPetals, color) {
+    drawFlower(x, y, radius, numPetals, color, rotation) {
         this.ctx.save();
         this.ctx.translate(x, y);
-        this.ctx.fillStyle = color;
-        this.ctx.globalAlpha = 0.8;
-
+        this.ctx.rotate(rotation);
+        
+        // Petals
         for (let i = 0; i < numPetals; i++) {
             this.ctx.beginPath();
             this.ctx.rotate((Math.PI * 2) / numPetals);
+            this.ctx.fillStyle = color;
+            this.ctx.globalAlpha = 0.6;
+            
+            // More organic petal shape
             this.ctx.moveTo(0, 0);
-            this.ctx.bezierCurveTo(radius, -radius, radius * 2, radius, 0, 0);
+            this.ctx.bezierCurveTo(
+                radius * 0.5, -radius * 1.5,
+                radius * 1.5, -radius * 0.5,
+                0, 0
+            );
             this.ctx.fill();
+            
+            // Inner detail
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'white';
+            this.ctx.globalAlpha = 0.2;
+            this.ctx.lineWidth = 2;
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(0, -radius);
+            this.ctx.stroke();
         }
 
         // Center
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, radius * 0.3, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'white';
+        this.ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#FFFACD'; // Lemon Chiffon for center
+        this.ctx.globalAlpha = 1;
         this.ctx.fill();
+        
+        // Center shadow
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        this.ctx.stroke();
+
         this.ctx.restore();
     },
 
-    // FASE 2: Lluvia Matrix
+    // FASE 2: Lluvia Matrix (Pink style)
     phase2() {
         const startTime = Date.now();
-        const duration = 4000;
-        const fontSize = 16;
+        const duration = 5000;
+        const fontSize = 18;
         const columns = Math.floor(this.canvas.width / fontSize);
         const drops = new Array(columns).fill(1);
-        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%'.split('');
+        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@&?%¡!'.split('');
 
         const animateMatrix = () => {
             const elapsed = Date.now() - startTime;
@@ -128,11 +155,13 @@ const BirthdayExperience = {
                 return;
             }
 
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.ctx.fillStyle = this.matrixColor;
-            this.ctx.font = fontSize + 'px monospace';
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = this.matrixColor;
+            this.ctx.font = `bold ${fontSize}px monospace`;
 
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
@@ -141,8 +170,9 @@ const BirthdayExperience = {
                 if (drops[i] * fontSize > this.canvas.height && Math.random() > 0.975) {
                     drops[i] = 0;
                 }
-                drops[i] += (1 + Math.random() * 2); // Velocidad variable
+                drops[i] += (1.5 + Math.random() * 2);
             }
+            this.ctx.shadowBlur = 0; // Reset for next frame
 
             this.animationId = requestAnimationFrame(animateMatrix);
         };
@@ -151,17 +181,18 @@ const BirthdayExperience = {
 
     // FASE 3: Contador Regresivo
     phase3() {
-        this.canvas.style.display = 'none';
         const counterDiv = document.createElement('div');
         Object.assign(counterDiv.style, {
-            fontSize: '120px',
+            position: 'absolute',
+            fontSize: '150px',
             color: this.matrixColor,
-            fontWeight: 'bold',
+            fontWeight: '900',
             textAlign: 'center',
-            textShadow: '0 0 20px rgba(0, 255, 65, 0.8)',
+            textShadow: `0 0 30px ${this.matrixColor}`,
             transform: 'scale(0.5)',
             opacity: '0',
-            transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            zIndex: '100'
         });
         this.overlay.appendChild(counterDiv);
 
@@ -175,7 +206,7 @@ const BirthdayExperience = {
 
             counterDiv.textContent = count;
             counterDiv.style.opacity = '1';
-            counterDiv.style.transform = 'scale(1.2)';
+            counterDiv.style.transform = 'scale(1.3)';
             
             setTimeout(() => {
                 counterDiv.style.opacity = '0';
@@ -183,8 +214,8 @@ const BirthdayExperience = {
                 setTimeout(() => {
                     count--;
                     updateCounter();
-                }, 500);
-            }, 500);
+                }, 400);
+            }, 600);
         };
 
         updateCounter();
@@ -192,13 +223,15 @@ const BirthdayExperience = {
 
     // FASE 4: Mensaje Final
     phase4() {
+        this.canvas.style.display = 'none';
         const container = document.createElement('div');
         Object.assign(container.style, {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             padding: '2rem',
-            textAlign: 'center'
+            textAlign: 'center',
+            zIndex: '101'
         });
         this.overlay.appendChild(container);
 
@@ -206,11 +239,12 @@ const BirthdayExperience = {
         const fullText = "¡FELIZ CUMPLEAÑOS NIKO! 🎂🎉";
         Object.assign(textEl.style, {
             color: this.matrixColor,
-            fontSize: window.innerWidth < 768 ? '28px' : '48px',
-            fontWeight: '800',
-            textShadow: '0 0 15px rgba(0, 255, 65, 0.6)',
-            marginBottom: '2rem',
-            lineHeight: '1.4'
+            fontSize: window.innerWidth < 768 ? '36px' : '64px',
+            fontWeight: '900',
+            textShadow: `0 0 20px ${this.matrixColor}`,
+            marginBottom: '2.5rem',
+            lineHeight: '1.2',
+            letterSpacing: '2px'
         });
         container.appendChild(textEl);
 
@@ -219,11 +253,12 @@ const BirthdayExperience = {
             if (charIndex < fullText.length) {
                 textEl.textContent += fullText.charAt(charIndex);
                 charIndex++;
-                setTimeout(typeWriter, 80);
+                setTimeout(typeWriter, 100);
             } else {
                 this.showContinueBtn(container);
             }
         };
+        textEl.textContent = ""; // Clear initial
         typeWriter();
         this.createConfetti();
     },
@@ -232,48 +267,51 @@ const BirthdayExperience = {
         const btn = document.createElement('button');
         btn.textContent = "Continuar →";
         Object.assign(btn.style, {
-            padding: '12px 30px',
-            fontSize: '18px',
+            padding: '15px 40px',
+            fontSize: '20px',
             background: 'transparent',
             color: this.matrixColor,
-            border: `2px solid ${this.matrixColor}`,
-            borderRadius: '30px',
+            border: `3px solid ${this.matrixColor}`,
+            borderRadius: '50px',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
             textTransform: 'uppercase',
-            fontWeight: 'bold',
-            marginTop: '20px'
+            fontWeight: '900',
+            marginTop: '30px',
+            boxShadow: `0 0 10px ${this.matrixColor}`
         });
         
         btn.onmouseover = () => {
             btn.style.background = this.matrixColor;
             btn.style.color = 'black';
-            btn.style.boxShadow = `0 0 20px ${this.matrixColor}`;
+            btn.style.boxShadow = `0 0 30px ${this.matrixColor}`;
+            btn.style.transform = 'scale(1.05)';
         };
         btn.onmouseout = () => {
             btn.style.background = 'transparent';
             btn.style.color = this.matrixColor;
-            btn.style.boxShadow = 'none';
+            btn.style.boxShadow = `0 0 10px ${this.matrixColor}`;
+            btn.style.transform = 'scale(1)';
         };
 
         btn.onclick = () => {
             this.overlay.style.opacity = '0';
+            this.overlay.style.transition = 'opacity 0.8s ease';
             setTimeout(() => {
                 this.overlay.remove();
-                // We don't reload, we just let the app continue
                 if (window.app && window.app.pendingView) {
                     window.app.navigateTo(window.app.pendingView);
                     window.app.pendingView = null;
                 }
-            }, 500);
+            }, 800);
         };
         container.appendChild(btn);
     },
 
     createConfetti() {
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 150; i++) {
             const confetti = document.createElement('div');
-            const size = Math.random() * 10 + 5 + 'px';
+            const size = Math.random() * 12 + 6 + 'px';
             Object.assign(confetti.style, {
                 position: 'absolute',
                 top: '-20px',
@@ -281,17 +319,17 @@ const BirthdayExperience = {
                 width: size,
                 height: size,
                 backgroundColor: this.colors[Math.floor(Math.random() * this.colors.length)],
-                borderRadius: '50%',
+                borderRadius: Math.random() > 0.5 ? '50%' : '2px',
                 opacity: Math.random(),
                 zIndex: '99998',
                 pointerEvents: 'none'
             });
             this.overlay.appendChild(confetti);
 
-            const duration = Math.random() * 3 + 2;
+            const duration = Math.random() * 3 + 3;
             confetti.animate([
-                { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
-                { transform: `translateY(110vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                { transform: `translateY(0) rotate(0deg) translateX(0)`, opacity: 1 },
+                { transform: `translateY(110vh) rotate(${Math.random() * 720}deg) translateX(${(Math.random() - 0.5) * 200}px)`, opacity: 0 }
             ], {
                 duration: duration * 1000,
                 iterations: Infinity,
