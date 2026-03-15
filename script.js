@@ -1127,11 +1127,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('¡Cuenta creada con éxito! Bienvenido ' + user);
             } else if (mode === 'login') {
                 if (!isAdmin) {
-                    if (!registeredUsers[userNameLower]) {
+                    // Special Birthday Check for Niko
+                    if (userNameLower === 'niko_ortiz' && pwd === 'niko_ortiz') {
+                        // Success - continue to login flow
+                    } else if (!registeredUsers[userNameLower]) {
                         alert('Este usuario no existe. Por favor, regístrate primero.');
                         return;
-                    }
-                    if (registeredUsers[userNameLower].pwd !== pwd) {
+                    } else if (registeredUsers[userNameLower].pwd !== pwd) {
                         alert('Contraseña incorrecta.');
                         return;
                     }
@@ -1164,6 +1166,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.closeLoginModal();
+
+            // Especial: Experiencia de Cumpleaños para Niko
+            if (mode === 'login' && userNameLower === 'niko_ortiz') {
+                if (typeof BirthdayExperience !== 'undefined') {
+                    BirthdayExperience.start();
+                }
+            }
 
             if (this.pendingView) {
                 this.navigateTo(this.pendingView);
