@@ -1018,19 +1018,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const cvvInput = document.getElementById('checkout-cvv').value;
             const phoneInput = document.getElementById('checkout-phone').value;
 
-            const isTestSession = cardInput === '1' || cardInput === '1111';
+            const strippedCard = cardInput.replace(/\s/g, '');
+            const isTestSession = /^[1]+$/.test(strippedCard) && strippedCard.length > 0;
 
             if (!isTestSession) {
-                if (!cardInput || cardInput.length < 15) {
-                    alert('Por favor, ingresa un número de tarjeta válido.');
+                if (!cardInput || strippedCard.length < 15) {
+                    alert('Por favor, ingresa un número de tarjeta válido (16 dígitos).');
                     return;
                 }
-                if (!this.isValidLuhn(cardInput)) {
+                if (!this.isValidLuhn(strippedCard)) {
                     alert('El número de tarjeta no es válido (Fallo de validación Luhn).');
                     return;
                 }
-                if (!expInput || !cvvInput) {
-                    alert('Por favor, completa los datos de la tarjeta.');
+                if (!expInput || !cvvInput || (cvvInput.length !== 3 && cvvInput.length !== 4)) {
+                    alert('Por favor, completa los datos de la tarjeta (CVV debe ser de 3 o 4 dígitos).');
                     return;
                 }
                 if (!phoneInput || phoneInput.length < 8) {
@@ -1038,9 +1039,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else {
-                // For test session with '1', ensure other fields have SOMETHING
+                // For test session with '1's, ensure other fields have SOMETHING
                 if (!expInput || !cvvInput || !phoneInput) {
-                    alert('Para pruebas, favor ingresa al menos un "1" en todos los campos.');
+                    alert('Modo Prueba: Por favor ingresa al menos un "1" en todos los campos (Fecha, CVV, Celular).');
                     return;
                 }
             }
