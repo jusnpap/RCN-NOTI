@@ -1003,21 +1003,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const cvvInput = document.getElementById('checkout-cvv').value;
             const phoneInput = document.getElementById('checkout-phone').value;
 
-            if (!cardInput || cardInput.length < 15) {
-                alert('Por favor, ingresa un número de tarjeta válido.');
-                return;
-            }
-            if (!this.isValidLuhn(cardInput)) {
-                alert('El número de tarjeta no es válido (Fallo de validación Luhn).');
-                return;
-            }
-            if (!expInput || !cvvInput) {
-                alert('Por favor, completa los datos de la tarjeta.');
-                return;
-            }
-            if (!phoneInput || phoneInput.length < 8) {
-                alert('Por favor, ingresa un número de celular válido para continuar.');
-                return;
+            const isTestSession = cardInput === '1' || cardInput === '1111';
+
+            if (!isTestSession) {
+                if (!cardInput || cardInput.length < 15) {
+                    alert('Por favor, ingresa un número de tarjeta válido.');
+                    return;
+                }
+                if (!this.isValidLuhn(cardInput)) {
+                    alert('El número de tarjeta no es válido (Fallo de validación Luhn).');
+                    return;
+                }
+                if (!expInput || !cvvInput) {
+                    alert('Por favor, completa los datos de la tarjeta.');
+                    return;
+                }
+                if (!phoneInput || phoneInput.length < 8) {
+                    alert('Por favor, ingresa un número de celular válido para continuar.');
+                    return;
+                }
+            } else {
+                // For test session with '1', ensure other fields have SOMETHING
+                if (!expInput || !cvvInput || !phoneInput) {
+                    alert('Para pruebas, favor ingresa al menos un "1" en todos los campos.');
+                    return;
+                }
             }
 
             alert('¡Pago procesado con éxito! Ahora disfrutas del plan ' + this.currentCheckoutPlan.name + '.');
