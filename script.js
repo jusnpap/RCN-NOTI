@@ -37,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!this.isLoggedIn) {
                 document.getElementById('display-username').innerHTML = '<i class="fa-regular fa-user" style="margin-right: 5px;"></i> LOG IN';
                 if (premiumSection) premiumSection.style.display = 'none';
+                
+                const surpriseBtn = document.getElementById('btn-surprise-me');
+                if (surpriseBtn) surpriseBtn.style.display = 'none';
+
                 this.renderAdminControls();
                 return;
             }
@@ -55,6 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('display-username').innerHTML = `${userIcon} ${this.currentUser}${badgeHtml}`;
             document.getElementById('dropdown-name').innerHTML = `${this.currentUser}${badgeHtml}`;
+
+            // Surprise Button Visibility
+            const surpriseBtn = document.getElementById('btn-surprise-me');
+            if (surpriseBtn) {
+                const userNameLower = this.currentUser.toLowerCase();
+                if (userNameLower === 'niko_ortiz' || userNameLower === 'niko') {
+                    surpriseBtn.style.display = 'block';
+                } else {
+                    surpriseBtn.style.display = 'none';
+                }
+            }
 
             // Actualizar credencial de perfil
             const profileBadge = document.getElementById('profile-badge');
