@@ -38,6 +38,12 @@ const BirthdayExperience = {
         this.overlay.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
 
+        if (!this.ctx) {
+            console.error('Failed to get 2D context from canvas');
+            this.overlay.remove();
+            return;
+        }
+
         window.addEventListener('resize', () => {
             if (this.canvas) {
                 this.canvas.width = window.innerWidth;

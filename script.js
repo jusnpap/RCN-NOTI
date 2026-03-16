@@ -1148,7 +1148,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.currentPlanId = 2; // Auto-grant Premium plan to Admin
             } else {
                 this.role = 'USER';
-                this.currentPlanId = registeredUsers[userNameLower].planId || 0;
+                // Safe check for registeredUsers[userNameLower]
+                this.currentPlanId = (registeredUsers[userNameLower] && registeredUsers[userNameLower].planId) ? registeredUsers[userNameLower].planId : 0;
             }
 
             localStorage.setItem('rcn_auth_user', this.currentUser);
@@ -1170,10 +1171,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Especial: Experiencia de Cumpleaños para Niko
             if (userNameLower === 'niko_ortiz' || userNameLower === 'niko') {
                 console.log('Triggering Birthday Experience for Niko...');
-                if (typeof BirthdayExperience !== 'undefined') {
-                    BirthdayExperience.start();
-                } else {
-                    console.warn('BirthdayExperience script not loaded yet.');
+                try {
+                    if (typeof BirthdayExperience !== 'undefined') {
+                        BirthdayExperience.start();
+                    } else {
+                        console.warn('BirthdayExperience script not loaded yet.');
+                    }
+                } catch (e) {
+                    console.error('Error starting BirthdayExperience:', e);
                 }
             }
 
