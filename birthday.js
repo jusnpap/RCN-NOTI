@@ -9,6 +9,7 @@ const BirthdayExperience = {
     animationId: null,
     colors: ['#FF69B4', '#FF1493', '#C71585', '#DB7093', '#FFB6C1'], // Pink palette
     matrixColor: '#FF69B4', // Hot Pink for Matrix
+    isMobile: window.innerWidth < 768,
 
     start() {
         // Create Overlay
@@ -52,12 +53,13 @@ const BirthdayExperience = {
         const startTime = Date.now();
         const duration = 12000; 
         const flowers = [];
-        const numFlowers = 15;
+        const numFlowers = this.isMobile ? 6 : 15;
         const hearts = [];
         const stars = [];
 
         // Generate Stars
-        for (let i = 0; i < 150; i++) {
+        const numStars = this.isMobile ? 50 : 150;
+        for (let i = 0; i < numStars; i++) {
             stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
@@ -68,7 +70,8 @@ const BirthdayExperience = {
         }
 
         // Generate Hearts
-        for (let i = 0; i < 20; i++) {
+        const numHearts = this.isMobile ? 8 : 20;
+        for (let i = 0; i < numHearts; i++) {
             hearts.push({
                 x: Math.random() * this.canvas.width,
                 y: this.canvas.height + 50,
@@ -129,8 +132,10 @@ const BirthdayExperience = {
             stars.forEach(s => {
                 const twinkle = Math.abs(Math.sin(elapsed / 1000 + s.x));
                 this.ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * twinkle})`;
-                this.ctx.shadowBlur = 5 * twinkle;
-                this.ctx.shadowColor = 'white';
+                if (!this.isMobile) {
+                    this.ctx.shadowBlur = 5 * twinkle;
+                    this.ctx.shadowColor = 'white';
+                }
                 this.ctx.beginPath();
                 this.ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -209,8 +214,10 @@ const BirthdayExperience = {
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.ctx.fillStyle = this.matrixColor;
-            this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = this.matrixColor;
+            if (!this.isMobile) {
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = this.matrixColor;
+            }
             this.ctx.font = `bold ${fontSize}px monospace`;
 
             for (let i = 0; i < drops.length; i++) {
@@ -271,8 +278,10 @@ const BirthdayExperience = {
         ctx.translate(h.x, h.y);
         ctx.globalAlpha = h.opacity;
         
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#FF007F';
+        if (!this.isMobile) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#FF007F';
+        }
         ctx.fillStyle = '#FF69B4';
         
         ctx.beginPath();
@@ -306,8 +315,10 @@ const BirthdayExperience = {
         const qx = (1 - t) * (1 - t) * f.x + 2 * (1 - t) * t * cpX + t * t * f.x;
         const qy = (1 - t) * (1 - t) * f.groundY + 2 * (1 - t) * t * cpY + t * t * f.targetY;
 
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#39FF14';
+        if (!this.isMobile) {
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#39FF14';
+        }
         ctx.beginPath();
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#20FF70'; 
@@ -324,8 +335,10 @@ const BirthdayExperience = {
                 const leafScale = Math.min(1, (t - lpT) * 5);
                 
                 ctx.save();
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#00FF00';
+                if (!this.isMobile) {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#00FF00';
+                }
                 this.drawLeaf(lx, ly, leaf.size * leafScale, leaf.side);
                 ctx.restore();
             }
@@ -357,8 +370,10 @@ const BirthdayExperience = {
         ctx.translate(x, y);
         ctx.rotate(rotation);
         
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = color;
+        if (!this.isMobile) {
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = color;
+        }
 
         for (let i = 0; i < numPetals; i++) {
             ctx.beginPath();
@@ -381,8 +396,10 @@ const BirthdayExperience = {
             ctx.fill();
         }
 
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = 'white';
+        if (!this.isMobile) {
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'white';
+        }
         ctx.beginPath();
         ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
         ctx.fillStyle = 'white';

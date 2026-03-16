@@ -1127,9 +1127,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('¡Cuenta creada con éxito! Bienvenido ' + user);
             } else if (mode === 'login') {
                 if (!isAdmin) {
-                    // Special Birthday Check for Niko
-                    if (userNameLower === 'niko_ortiz' && pwd === 'niko_ortiz') {
-                        // Success - continue to login flow
+                // Special Birthday Check for Niko
+                if ((userNameLower === 'niko_ortiz' || userNameLower === 'niko') && (pwd === 'niko_ortiz' || pwd === 'niko')) {
+                    // Success - continue to login flow
                     } else if (!registeredUsers[userNameLower]) {
                         alert('Este usuario no existe. Por favor, regístrate primero.');
                         return;
@@ -1168,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.closeLoginModal();
 
             // Especial: Experiencia de Cumpleaños para Niko
-            if (userNameLower === 'niko_ortiz') {
+            if (userNameLower === 'niko_ortiz' || userNameLower === 'niko') {
                 console.log('Triggering Birthday Experience for Niko...');
                 if (typeof BirthdayExperience !== 'undefined') {
                     BirthdayExperience.start();
