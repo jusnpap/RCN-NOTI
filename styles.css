@@ -438,8 +438,8 @@ a.video-card {
     background: var(--bg-white);
     color: var(--accent-blue);
     border: 2px solid var(--accent-blue);
-    padding: 1rem 3.5rem;
-    font-size: 1rem;
+    padding: 0.8rem 2.5rem; /* Standardized padding */
+    font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 1.5px;
     border-radius: 4px;
@@ -1065,6 +1065,8 @@ a.video-card {
     height: 120px;
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent-blue) 100%);
     z-index: 0;
+    border-top-left-radius: var(--radius-lg); /* Match card corners */
+    border-top-right-radius: var(--radius-lg);
 }
 
 .profile-avatar-large {
@@ -1241,6 +1243,7 @@ a.video-card {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: auto; /* Push buttons to the bottom */
 }
 
 .plan-phone-input {
@@ -1267,6 +1270,7 @@ a.video-card {
     cursor: default;
     color: var(--text-muted);
     border-color: var(--text-muted);
+    margin-top: auto; /* Push to bottom for alignment */
 }
 
 .plan-btn-active:hover {

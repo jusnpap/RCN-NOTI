@@ -47,6 +47,8 @@ body.dark-mode {
 .dark-mode .plan-card {
     background: var(--bg-white);
     border-color: var(--border-light);
+    border-radius: var(--radius-lg); /* Ensure all corners are rounded */
+    overflow: hidden; /* Clip edges (filos) */
 }
 
 .dark-mode .input-group input,
