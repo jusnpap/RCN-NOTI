@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async downloadPDF(container) {
             const titleEl = container.querySelector('.news-summary-title') || container.querySelector('.video-brand') || document.querySelector('.video-brand');
-            const descEl = container.querySelector('.video-description p') || container.querySelector('.video-description') || document.querySelector('.video-description');
+            const descEl = container.querySelector('.video-description') || document.querySelector('.video-description');
 
             if (!titleEl || !descEl || !window.jspdf) {
                 alert('No se pudo encontrar el contenido para descargar o la librería PDF no cargó.');
@@ -488,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
-                    format: 'a4'
+                    format: 'a4',
+                    putOnlyUsedFonts: true
                 });
 
                 const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#FF3B3F';
@@ -508,12 +509,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     logoData = await this.getImageBase64('assets/logo.png');
                 } catch (e) { console.warn('Logo not found', e); }
 
-                const articleImg = container.querySelector('img') || container.querySelector('video[data-poster]')?.getAttribute('data-poster');
-                if (articleImg) {
+                // Robust Article Image / Video Poster Extraction
+                let imgSrc = null;
+                const imgEl = container.querySelector('img');
+                if (imgEl) {
+                    imgSrc = imgEl.src;
+                } else {
+                    const videoEl = container.querySelector('video');
+                    if (videoEl) {
+                        imgSrc = videoEl.getAttribute('data-poster') || videoEl.poster || videoEl.getAttribute('poster');
+                    }
+                }
+
+                if (imgSrc) {
                     try {
-                        const imgSrc = typeof articleImg === 'string' ? articleImg : articleImg.src;
                         articleImgData = await this.getImageBase64(imgSrc);
-                    } catch (e) { console.warn('Article image not found', e); }
+                    } catch (e) { console.warn('Article image failed to load', e); }
                 }
 
                 // Header Bar
@@ -557,7 +568,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Brand Watermark (Diagonal)
                 const addWatermark = (d) => {
                     d.saveGraphicsState();
-                    d.setGState(new d.GState({ opacity: 0.05 }));
+                    try {
+                        const gState = new d.GState({ opacity: 0.03 });
+                        d.setGState(gState);
+                    } catch (e) {}
                     d.setTextColor(150, 150, 150);
                     d.setFontSize(60);
                     d.setFont('helvetica', 'bold');
@@ -569,14 +583,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Featured Image
                 if (articleImgData) {
                     const imgWidth = maxLineWidth;
-                    const imgHeight = 60; // Fixed height for simplicity, or we could calculate ratio
-                    if (cursorY + imgHeight > pageHeight - 30) {
+                    const imgHeight = 70; // Increased height
+                    if (cursorY + imgHeight > pageHeight - 40) {
                         doc.addPage();
                         cursorY = 25;
                         addWatermark(doc);
                     }
-                    doc.addImage(articleImgData, 'JPEG', margin, cursorY, imgWidth, imgHeight);
-                    cursorY += imgHeight + 10;
+                    try {
+                        doc.addImage(articleImgData, 'JPEG', margin, cursorY, imgWidth, imgHeight, undefined, 'FAST');
+                        cursorY += imgHeight + 12;
+                    } catch(e) {
+                        console.error('Error adding image to PDF:', e);
+                    }
                 }
 
                 // Content Body
@@ -585,7 +603,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.setFont('helvetica', 'normal');
 
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = descEl.innerHTML.replace(/<\/p>/gi, '\n\n').replace(/<br\s*[\/]?>/gi, '\n').replace(/<h[1-6][^>]*>/gi, '\n\n').replace(/<\/h[1-6]>/gi, '\n');
+                tempDiv.innerHTML = descEl.innerHTML
+                    .replace(/<\/p>/gi, '\n\n')
+                    .replace(/<br\s*[\/]?>/gi, '\n')
+                    .replace(/<h[1-6][^>]*>/gi, '\n\n')
+                    .replace(/<\/h[1-6]>/gi, '\n')
+                    .replace(/<li>/gi, '\n• ')
+                    .replace(/<\/li>/gi, '')
+                    .replace(/<(?:.|\n)*?>/gm, ''); 
+
                 const cleanText = tempDiv.textContent || tempDiv.innerText || "";
                 const contentLines = doc.splitTextToSize(cleanText.trim(), maxLineWidth);
 
