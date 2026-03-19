@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        downloadPDF(container) {
+        async downloadPDF(container) {
             const titleEl = container.querySelector('.news-summary-title') || container.querySelector('.video-brand') || document.querySelector('.video-brand');
             const descEl = container.querySelector('.video-description p') || container.querySelector('.video-description') || document.querySelector('.video-description');
 
@@ -483,121 +483,182 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.disabled = true;
             }
 
-            // small timeout to allow UI update
-            setTimeout(() => {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#FF3B3F';
+                const rgb = this.hexToRgb(accentColor) || { r: 255, g: 59, b: 63 };
+
+                const margin = 20;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const maxLineWidth = pageWidth - margin * 2;
+                let cursorY = 0;
+
+                // Load Logo and Article Image
+                let logoData = null;
+                let articleImgData = null;
+
                 try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'a4'
-                    });
+                    logoData = await this.getImageBase64('assets/logo.png');
+                } catch (e) { console.warn('Logo not found', e); }
 
-                    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#FF3B3F';
-                    const rgb = this.hexToRgb(accentColor) || { r: 255, g: 59, b: 63 };
+                const articleImg = container.querySelector('img') || container.querySelector('video[data-poster]')?.getAttribute('data-poster');
+                if (articleImg) {
+                    try {
+                        const imgSrc = typeof articleImg === 'string' ? articleImg : articleImg.src;
+                        articleImgData = await this.getImageBase64(imgSrc);
+                    } catch (e) { console.warn('Article image not found', e); }
+                }
 
-                    const margin = 20;
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
-                    const maxLineWidth = pageWidth - margin * 2;
-                    let cursorY = 0;
-
-                    // Header Bar
-                    doc.setFillColor(rgb.r, rgb.g, rgb.b);
-                    doc.rect(0, 0, pageWidth, 40, 'F');
-                    
+                // Header Bar
+                doc.setFillColor(rgb.r, rgb.g, rgb.b);
+                doc.rect(0, 0, pageWidth, 40, 'F');
+                
+                if (logoData) {
+                    doc.addImage(logoData, 'PNG', margin, 10, 20, 20);
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(26);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RCN NOTICIAS', margin + 25, 25);
+                } else {
                     doc.setTextColor(255, 255, 255);
                     doc.setFontSize(26);
                     doc.setFont('helvetica', 'bold');
                     doc.text('RCN NOTICIAS', margin, 25);
-                    
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text('REPORTE PREMIUM EXCLUSIVO', margin, 32);
-
-                    cursorY = 60;
-
-                    // Brand Watermark (Diagonal)
-                    doc.setTextColor(240, 240, 240);
-                    doc.setFontSize(60);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('RCN PREMIUM', pageWidth / 2, pageHeight / 2, { angle: 45, align: 'center', opacity: 0.1 });
-
-                    // Title
-                    doc.setTextColor(rgb.r, rgb.g, rgb.b);
-                    doc.setFontSize(24);
-                    doc.setFont('helvetica', 'bold');
-                    const title = titleEl.textContent.trim();
-                    const titleLines = doc.splitTextToSize(title, maxLineWidth);
-                    doc.text(titleLines, margin, cursorY);
-                    cursorY += (titleLines.length * 12);
-
-                    // Underline Title
-                    doc.setDrawColor(rgb.r, rgb.g, rgb.b);
-                    doc.setLineWidth(1);
-                    doc.line(margin, cursorY - 5, pageWidth - margin, cursorY - 5);
-                    cursorY += 15;
-
-                    // Content Body
-                    doc.setTextColor(31, 41, 55); 
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'normal');
-
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = descEl.innerHTML.replace(/<\/p>/gi, '\n\n').replace(/<br\s*[\/]?>/gi, '\n');
-                    const cleanText = tempDiv.textContent || tempDiv.innerText || "";
-
-                    const contentLines = doc.splitTextToSize(cleanText.trim(), maxLineWidth);
-
-                    contentLines.forEach(line => {
-                        if (cursorY > pageHeight - 30) {
-                            doc.addPage();
-                            // Header remains on page 1 only for elegance, or we add a small one?
-                            // Let's add a small header on subsequent pages
-                            doc.setFillColor(rgb.r, rgb.g, rgb.b);
-                            doc.rect(0, 0, pageWidth, 15, 'F');
-                            doc.setTextColor(255, 255, 255);
-                            doc.setFontSize(10);
-                            doc.text('RCN NOTICIAS - CONTINUACIÓN', margin, 10);
-                            
-                            cursorY = 30;
-                            // Watermark again
-                            doc.setTextColor(240, 240, 240);
-                            doc.setFontSize(60);
-                            doc.text('RCN PREMIUM', pageWidth / 2, pageHeight / 2, { angle: 45, align: 'center' });
-                            
-                            doc.setTextColor(31, 41, 55);
-                            doc.setFontSize(11);
-                        }
-                        doc.text(line, margin, cursorY);
-                        cursorY += 7.5; // Better line height
-                    });
-
-                    // Footer
-                    const dateStr = new Date().toLocaleString();
-                    doc.setFillColor(248, 250, 252);
-                    doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-                    doc.setDrawColor(226, 232, 240);
-                    doc.line(0, pageHeight - 20, pageWidth, pageHeight - 20);
-
-                    doc.setTextColor(100, 116, 139);
-                    doc.setFontSize(8);
-                    doc.text(`Generado por: ${this.currentUser || 'Usuario RCN'} | Fecha: ${dateStr}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-                    doc.text('Este documento es para uso personal del suscriptor. RCN Noticias © 2026', pageWidth / 2, pageHeight - 5, { align: 'center' });
-
-                    const filename = `RCN_${title.replace(/[^a-z0-9]/gi, '_').substring(0, 30).toLowerCase()}.pdf`;
-                    doc.save(filename);
-
-                } catch (err) {
-                    console.error('PDF generation error:', err);
-                    alert('Error al generar el PDF. Verifica que el contenido sea válido.');
-                } finally {
-                    if (btn) {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
-                    }
                 }
-            }, 100);
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text('REPORTE PREMIUM EXCLUSIVO', margin + (logoData ? 25 : 0), 32);
+
+                cursorY = 55;
+
+                // Title
+                doc.setTextColor(rgb.r, rgb.g, rgb.b);
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                const title = titleEl.textContent.trim();
+                const titleLines = doc.splitTextToSize(title, maxLineWidth);
+                doc.text(titleLines, margin, cursorY);
+                cursorY += (titleLines.length * 10);
+
+                // Underline Title
+                doc.setDrawColor(rgb.r, rgb.g, rgb.b);
+                doc.setLineWidth(0.5);
+                doc.line(margin, cursorY - 2, pageWidth - margin, cursorY - 2);
+                cursorY += 10;
+
+                // Brand Watermark (Diagonal)
+                const addWatermark = (d) => {
+                    d.saveGraphicsState();
+                    d.setGState(new d.GState({ opacity: 0.05 }));
+                    d.setTextColor(150, 150, 150);
+                    d.setFontSize(60);
+                    d.setFont('helvetica', 'bold');
+                    d.text('RCN PREMIUM', pageWidth / 2, pageHeight / 2, { angle: 45, align: 'center' });
+                    d.restoreGraphicsState();
+                };
+                addWatermark(doc);
+
+                // Featured Image
+                if (articleImgData) {
+                    const imgWidth = maxLineWidth;
+                    const imgHeight = 60; // Fixed height for simplicity, or we could calculate ratio
+                    if (cursorY + imgHeight > pageHeight - 30) {
+                        doc.addPage();
+                        cursorY = 25;
+                        addWatermark(doc);
+                    }
+                    doc.addImage(articleImgData, 'JPEG', margin, cursorY, imgWidth, imgHeight);
+                    cursorY += imgHeight + 10;
+                }
+
+                // Content Body
+                doc.setTextColor(31, 41, 55); 
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = descEl.innerHTML.replace(/<\/p>/gi, '\n\n').replace(/<br\s*[\/]?>/gi, '\n').replace(/<h[1-6][^>]*>/gi, '\n\n').replace(/<\/h[1-6]>/gi, '\n');
+                const cleanText = tempDiv.textContent || tempDiv.innerText || "";
+                const contentLines = doc.splitTextToSize(cleanText.trim(), maxLineWidth);
+
+                contentLines.forEach(line => {
+                    if (cursorY > pageHeight - 30) {
+                        doc.addPage();
+                        addWatermark(doc);
+                        
+                        // Header on subsequent pages
+                        doc.setFillColor(rgb.r, rgb.g, rgb.b);
+                        doc.rect(0, 0, pageWidth, 15, 'F');
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFontSize(10);
+                        doc.text('RCN NOTICIAS - CONTINUACIÓN', margin, 10);
+                        
+                        cursorY = 30;
+                        doc.setTextColor(31, 41, 55);
+                        doc.setFontSize(11);
+                    }
+                    doc.text(line, margin, cursorY);
+                    cursorY += 7; 
+                });
+
+                // Footer
+                const addFooter = (d, pNum, pTotal) => {
+                    const dateStr = new Date().toLocaleString();
+                    d.setFillColor(248, 250, 252);
+                    d.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+                    d.setDrawColor(226, 232, 240);
+                    d.line(0, pageHeight - 20, pageWidth, pageHeight - 20);
+
+                    d.setTextColor(100, 116, 139);
+                    d.setFontSize(8);
+                    d.text(`Generado por: ${app.currentUser || 'Usuario RCN'} | Fecha: ${dateStr}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                    d.text('Este documento es para uso personal del suscriptor. RCN Noticias © 2026', pageWidth / 2, pageHeight - 5, { align: 'center' });
+                };
+
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    addFooter(doc, i, pageCount);
+                }
+
+                const filename = `RCN_${title.replace(/[^a-z0-9]/gi, '_').substring(0, 30).toLowerCase()}.pdf`;
+                doc.save(filename);
+
+            } catch (err) {
+                console.error('PDF generation error:', err);
+                alert('Error al generar el PDF. Verifica que el contenido sea válido.');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            }
+        },
+
+        getImageBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.setAttribute('crossOrigin', 'anonymous');
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+                    resolve(dataURL);
+                };
+                img.onerror = (e) => reject(e);
+                img.src = url;
+            });
         },
 
         openSettingsModal() {
@@ -2188,6 +2249,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Unified synchronization from cloud
     app.init(); // Clean storage before sync
+    // Prioritize immediate local render before fetching from cloud
+    app.applySavedAnnouncements(true); 
     app.syncFromCloud();
     app.initParticles();
 
@@ -2246,22 +2309,22 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(40px)';
 
-            // Staggered entry
+            // Staggered entry - Reduced delays for faster perceived performance
             setTimeout(() => {
-                card.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                card.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
 
-                // Remove inline transition after animation to allow hover effects to take over properly
+                // Remove inline transition after animation
                 setTimeout(() => {
                     card.style.transition = '';
-                }, 600);
-            }, 100 + (index * 150));
+                }, 400);
+            }, 50 + (index * 60));
         });
     };
 
-    // Initial animation
-    setTimeout(animateCardsIn, 200);
+    // Initial animation - Start sooner
+    setTimeout(animateCardsIn, 50);
 
     // Video error handling for posters and initial frame
     const videos = document.querySelectorAll('.preview-video, .plyr-video');
